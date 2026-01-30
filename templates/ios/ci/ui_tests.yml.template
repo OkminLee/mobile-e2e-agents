@@ -1,0 +1,112 @@
+name: UI Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_target:
+        description: 'Test target to run'
+        required: false
+        default: '{{TEST_TARGET}}'
+      device:
+        description: 'Simulator device'
+        required: false
+        default: 'iPhone 16 Pro'
+      ios_version:
+        description: 'iOS version'
+        required: false
+        default: 'latest'
+      parallel_workers:
+        description: 'Parallel workers (0 to disable)'
+        required: false
+        default: '0'
+        type: choice
+        options:
+          - '0'
+          - '2'
+          - '4'
+
+concurrency:
+  group: ui-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui-tests:
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Select Xcode
+      run: |
+        # List available Xcode versions
+        ls /Applications | grep Xcode
+        # Select latest stable Xcode
+        sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
+
+    - name: Show Build Settings
+      run: |
+        xcodebuild -workspace {{WORKSPACE}}.xcworkspace -scheme {{SCHEME}} -showBuildSettings | head -50
+
+    - name: Build for Testing
+      run: |
+        xcodebuild build-for-testing \
+          -workspace {{WORKSPACE}}.xcworkspace \
+          -scheme {{SCHEME}} \
+          -destination 'platform=iOS Simulator,name=${{ inputs.device }},OS=${{ inputs.ios_version }}' \
+          | xcpretty
+
+    - name: Run UI Tests
+      run: |
+        PARALLEL_ARGS=""
+        if [ "${{ inputs.parallel_workers }}" != "0" ]; then
+          PARALLEL_ARGS="-parallel-testing-enabled YES -parallel-testing-worker-count ${{ inputs.parallel_workers }} -retry-tests-on-failure"
+        fi
+
+        xcodebuild test-without-building \
+          -workspace {{WORKSPACE}}.xcworkspace \
+          -scheme {{SCHEME}} \
+          -destination 'platform=iOS Simulator,name=${{ inputs.device }},OS=${{ inputs.ios_version }}' \
+          -only-testing:${{ inputs.test_target }} \
+          -resultBundlePath test_results/results.xcresult \
+          $PARALLEL_ARGS \
+          | xcpretty --report junit --output test_results/junit.xml
+
+    - name: Parse Test Results
+      if: always()
+      run: |
+        if [ -d "test_results/results.xcresult" ]; then
+          xcrun xcresulttool get test-results summary \
+            --path test_results/results.xcresult \
+            --format json > test_results/summary.json
+
+          # Extract metrics
+          PASSED=$(jq '.passedTests // 0' test_results/summary.json)
+          FAILED=$(jq '.failedTests // 0' test_results/summary.json)
+          SKIPPED=$(jq '.skippedTests // 0' test_results/summary.json)
+
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Passed: $PASSED" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ Failed: $FAILED" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏭️ Skipped: $SKIPPED" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ github.run_number }}
+        path: test_results/
+        retention-days: 7
+
+    - name: Upload Screenshots on Failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: failure-screenshots-${{ github.run_number }}
+        path: |
+          test_results/**/*.png
+          test_results/**/*.jpg
+        retention-days: 14
+        if-no-files-found: ignore

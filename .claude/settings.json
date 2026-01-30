@@ -1,0 +1,29 @@
+{
+  "name": "mobile-e2e-agents",
+  "version": "0.1.0",
+  "description": "Claude Code Extension for Cross-Platform Mobile E2E Testing",
+  "author": "mobile-e2e-agents contributors",
+  "license": "MIT",
+  "keywords": [
+    "e2e",
+    "testing",
+    "ios",
+    "android",
+    "xcuitest",
+    "espresso",
+    "page-object-model",
+    "automation"
+  ],
+  "platforms": {
+    "ios": {
+      "enabled": true,
+      "framework": "XCUITest",
+      "minVersion": "17.0"
+    },
+    "android": {
+      "enabled": false,
+      "framework": "Espresso",
+      "minApi": 26
+    }
+  }
+}

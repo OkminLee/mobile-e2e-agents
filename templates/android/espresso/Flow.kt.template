@@ -1,0 +1,86 @@
+package {{PACKAGE}}.flows
+
+import {{PACKAGE}}.pages.*
+
+/**
+ * {{FLOW_NAME}} Flow
+ *
+ * Encapsulates a complete user journey through multiple screens.
+ * Use flows when a sequence of steps is repeated across multiple tests.
+ *
+ * Benefits:
+ * - Reduces code duplication
+ * - Single point of maintenance
+ * - Clear documentation of user journeys
+ *
+ * Usage:
+ * ```kotlin
+ * val flow = {{FLOW_NAME}}Flow()
+ * flow.complete{{FLOW_NAME}}()
+ * ```
+ */
+class {{FLOW_NAME}}Flow {
+
+    // MARK: - Configuration
+
+    /**
+     * Test data for this flow
+     */
+    object TestData {
+        {{TEST_DATA}}
+    }
+
+    // MARK: - Complete Flow
+
+    /**
+     * Execute the complete {{FLOW_NAME}} flow
+     * @return The final page after flow completion
+     */
+    fun complete{{FLOW_NAME}}(): {{END_PAGE}} {
+        {{FLOW_STEPS}}
+    }
+
+    // MARK: - Partial Flows
+
+    {{PARTIAL_FLOWS}}
+
+    // MARK: - Verification
+
+    /**
+     * Verify flow completed successfully
+     */
+    fun verifyFlowCompleted(): Boolean {
+        return {{END_PAGE}}().verifyScreenDisplayed()
+    }
+}
+
+/*
+ * Flow Step Template:
+ *
+ * fun complete{{FLOW_NAME}}(): HomePage {
+ *     // Step 1: Start on Login
+ *     val loginPage = LoginPage()
+ *     assertTrue(loginPage.verifyScreenDisplayed())
+ *
+ *     // Step 2: Enter credentials
+ *     loginPage
+ *         .enterUsername(TestData.username)
+ *         .enterPassword(TestData.password)
+ *
+ *     // Step 3: Submit and navigate
+ *     val homePage = loginPage.tapSubmit()
+ *
+ *     // Step 4: Verify success
+ *     assertTrue(homePage.verifyScreenDisplayed())
+ *
+ *     return homePage
+ * }
+ *
+ * Partial Flow Template:
+ *
+ * fun navigateToSettings(): SettingsPage {
+ *     return HomePage()
+ *         .tapMenu()
+ *         .tapSettings()
+ * }
+ */

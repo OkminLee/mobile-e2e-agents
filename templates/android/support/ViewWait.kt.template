@@ -1,0 +1,256 @@
+package {{PACKAGE}}.support
+
+import android.view.View
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.NoMatchingViewException
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
+import androidx.test.espresso.ViewInteraction
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
+import org.hamcrest.Matcher
+import java.util.concurrent.TimeoutException
+
+/**
+ * Wait utilities for Espresso (View-based) tests
+ *
+ * Provides intelligent waiting mechanisms that avoid flaky tests
+ * by properly synchronizing with UI state changes.
+ *
+ * Best Practices:
+ * - Always prefer these waits over Thread.sleep()
+ * - Use appropriate timeouts (shorter for UI, longer for network)
+ * - Combine with IdlingResources for async operations
+ *
+ * Usage:
+ * ```kotlin
+ * // Wait for view to appear
+ * ViewWait.waitForView(withId(R.id.button), 5000)
+ *
+ * // Wait for view to disappear
+ * ViewWait.waitForViewToDisappear(withId(R.id.loading), 10000)
+ *
+ * // Wait with custom condition
+ * ViewWait.waitUntil { someCondition() }
+ * ```
+ */
+object ViewWait {
+
+    /**
+     * Default timeout for view waiting operations
+     */
+    const val DEFAULT_TIMEOUT_MS = 5000L
+
+    /**
+     * Default polling interval between checks
+     */
+    const val DEFAULT_INTERVAL_MS = 100L
+
+    /**
+     * Wait for a view matching the given matcher to be displayed
+     *
+     * @param matcher View matcher to find the target view
+     * @param timeoutMs Maximum time to wait
+     * @param intervalMs Polling interval between checks
+     * @throws TimeoutException if view is not found within timeout
+     */
+    fun waitForView(
+        matcher: Matcher<View>,
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+        intervalMs: Long = DEFAULT_INTERVAL_MS
+    ) {
+        val endTime = System.currentTimeMillis() + timeoutMs
+        var lastException: Exception? = null
+
+        while (System.currentTimeMillis() < endTime) {
+            try {
+                onView(matcher).check(matches(isDisplayed()))
+                return
+            } catch (e: NoMatchingViewException) {
+                lastException = e
+                Thread.sleep(intervalMs)
+            } catch (e: AssertionError) {
+                lastException = Exception(e.message)
+                Thread.sleep(intervalMs)
+            }
+        }
+
+        throw TimeoutException(
+            "View not found within ${timeoutMs}ms: $matcher. Last error: ${lastException?.message}"
+        )
+    }
+
+    /**
+     * Wait for a ViewInteraction to be displayed
+     *
+     * @param interaction The ViewInteraction to check
+     * @param timeoutMs Maximum time to wait
+     * @param intervalMs Polling interval between checks
+     * @throws TimeoutException if view is not displayed within timeout
+     */
+    fun waitForViewInteraction(
+        interaction: ViewInteraction,
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+        intervalMs: Long = DEFAULT_INTERVAL_MS
+    ) {
+        val endTime = System.currentTimeMillis() + timeoutMs
+        var lastException: Exception? = null
+
+        while (System.currentTimeMillis() < endTime) {
+            try {
+                interaction.check(matches(isDisplayed()))
+                return
+            } catch (e: NoMatchingViewException) {
+                lastException = e
+                Thread.sleep(intervalMs)
+            } catch (e: AssertionError) {
+                lastException = Exception(e.message)
+                Thread.sleep(intervalMs)
+            }
+        }
+
+        throw TimeoutException(
+            "View not displayed within ${timeoutMs}ms. Last error: ${lastException?.message}"
+        )
+    }
+
+    /**
+     * Wait for a view to disappear from screen
+     *
+     * Useful for waiting for loading indicators, dialogs, or transitions.
+     *
+     * @param matcher View matcher for the view to disappear
+     * @param timeoutMs Maximum time to wait
+     * @param intervalMs Polling interval between checks
+     * @throws TimeoutException if view is still visible after timeout
+     */
+    fun waitForViewToDisappear(
+        matcher: Matcher<View>,
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+        intervalMs: Long = DEFAULT_INTERVAL_MS
+    ) {
+        val endTime = System.currentTimeMillis() + timeoutMs
+
+        while (System.currentTimeMillis() < endTime) {
+            try {
+                onView(matcher).check(matches(isDisplayed()))
+                // View still visible, keep waiting
+                Thread.sleep(intervalMs)
+            } catch (e: NoMatchingViewException) {
+                // View not found - success
+                return
+            } catch (e: AssertionError) {
+                // View not displayed - success
+                return
+            }
+        }
+
+        throw TimeoutException("View still visible after ${timeoutMs}ms: $matcher")
+    }
+
+    /**
+     * Wait until a custom condition is met
+     *
+     * @param timeoutMs Maximum time to wait
+     * @param intervalMs Polling interval between checks
+     * @param condition Lambda that returns true when condition is met
+     * @throws TimeoutException if condition is not met within timeout
+     */
+    inline fun waitUntil(
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+        intervalMs: Long = DEFAULT_INTERVAL_MS,
+        crossinline condition: () -> Boolean
+    ) {
+        val endTime = System.currentTimeMillis() + timeoutMs
+
+        while (System.currentTimeMillis() < endTime) {
+            if (condition()) return
+            Thread.sleep(intervalMs)
+        }
+
+        throw TimeoutException("Condition not met within ${timeoutMs}ms")
+    }
+
+    /**
+     * Wait for loading indicator to disappear
+     *
+     * @param loadingMatcher Matcher for the loading view
+     * @param timeoutMs Maximum time to wait for loading to complete
+     */
+    fun waitForLoadingToComplete(
+        loadingMatcher: Matcher<View>,
+        timeoutMs: Long = 10000L
+    ) {
+        // First, give loading a chance to appear
+        Thread.sleep(200)
+
+        // Then wait for it to disappear
+        waitForViewToDisappear(loadingMatcher, timeoutMs)
+    }
+
+    /**
+     * Perform a ViewAction with waiting
+     *
+     * This is an alternative approach using Espresso's built-in mechanisms.
+     */
+    fun waitAction(
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS
+    ): ViewAction {
+        return object : ViewAction {
+            override fun getConstraints(): Matcher<View> = isRoot()
+
+            override fun getDescription(): String = "wait for $timeoutMs milliseconds"
+
+            override fun perform(uiController: UiController, view: View) {
+                uiController.loopMainThreadForAtLeast(timeoutMs)
+            }
+        }
+    }
+
+    /**
+     * Check if view exists (non-throwing)
+     *
+     * @param matcher View matcher
+     * @return true if view exists and is displayed, false otherwise
+     */
+    fun viewExists(matcher: Matcher<View>): Boolean {
+        return try {
+            onView(matcher).check(matches(isDisplayed()))
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Wait for any of the given matchers to match a displayed view
+     *
+     * Useful when multiple outcomes are possible (e.g., success or error).
+     *
+     * @param matchers List of matchers, any one matching is success
+     * @param timeoutMs Maximum time to wait
+     * @return The matcher that succeeded
+     * @throws TimeoutException if no matcher matches within timeout
+     */
+    fun waitForAnyView(
+        vararg matchers: Matcher<View>,
+        timeoutMs: Long = DEFAULT_TIMEOUT_MS,
+        intervalMs: Long = DEFAULT_INTERVAL_MS
+    ): Matcher<View> {
+        val endTime = System.currentTimeMillis() + timeoutMs
+
+        while (System.currentTimeMillis() < endTime) {
+            for (matcher in matchers) {
+                if (viewExists(matcher)) {
+                    return matcher
+                }
+            }
+            Thread.sleep(intervalMs)
+        }
+
+        throw TimeoutException(
+            "None of the views found within ${timeoutMs}ms: ${matchers.toList()}"
+        )
+    }
+}

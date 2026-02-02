@@ -1,0 +1,168 @@
+package {{PACKAGE}}.support
+
+import android.graphics.Bitmap
+import android.os.Build
+import android.os.Environment
+import android.view.View
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.screenshot.Screenshot
+import java.io.File
+import java.io.FileOutputStream
+
+/**
+ * Screenshot Helper for UI Tests
+ *
+ * Provides utilities for capturing screenshots during tests for:
+ * - Visual verification
+ * - Debugging test failures
+ * - Documentation
+ *
+ * Usage:
+ * ```kotlin
+ * // In test
+ * captureScreenshot("login_screen_initial")
+ *
+ * // Capture on failure
+ * ScreenshotHelper.captureOnFailure(testName)
+ * ```
+ */
+object ScreenshotHelper {
+
+    private const val SCREENSHOT_DIR = "screenshots"
+
+    /**
+     * Capture screenshot with given name
+     */
+    fun capture(
+        name: String,
+        activityRule: ActivityScenarioRule<*>? = null
+    ): File? {
+        return try {
+            val bitmap = captureScreen(activityRule)
+            bitmap?.let { saveBitmap(it, name) }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * Capture screenshot on test failure
+     */
+    fun captureOnFailure(
+        testName: String,
+        activityRule: ActivityScenarioRule<*>? = null
+    ): File? {
+        return capture("FAILURE_$testName", activityRule)
+    }
+
+    /**
+     * Capture screen as bitmap
+     */
+    private fun captureScreen(activityRule: ActivityScenarioRule<*>?): Bitmap? {
+        var bitmap: Bitmap? = null
+
+        activityRule?.scenario?.onActivity { activity ->
+            val rootView = activity.window.decorView.rootView
+            bitmap = captureView(rootView)
+        }
+
+        // Fallback to Screenshot API if activity not available
+        if (bitmap == null) {
+            try {
+                val capture = Screenshot.capture()
+                bitmap = capture.bitmap
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        return bitmap
+    }
+
+    /**
+     * Capture specific view as bitmap
+     */
+    fun captureView(view: View): Bitmap? {
+        return try {
+            view.isDrawingCacheEnabled = true
+            view.buildDrawingCache(true)
+            val bitmap = Bitmap.createBitmap(view.drawingCache)
+            view.isDrawingCacheEnabled = false
+            bitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * Save bitmap to file
+     */
+    private fun saveBitmap(bitmap: Bitmap, name: String): File? {
+        val screenshotDir = getScreenshotDirectory()
+        if (!screenshotDir.exists()) {
+            screenshotDir.mkdirs()
+        }
+
+        val timestamp = System.currentTimeMillis()
+        val filename = "${name}_$timestamp.png"
+        val file = File(screenshotDir, filename)
+
+        return try {
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            println("Screenshot saved: ${file.absolutePath}")
+            file
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * Get screenshot storage directory
+     */
+    private fun getScreenshotDirectory(): File {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+        // Try external storage first (easier to pull from device)
+        val externalDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        } else {
+            @Suppress("DEPRECATION")
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        }
+
+        return externalDir?.let {
+            File(it, SCREENSHOT_DIR)
+        } ?: File(context.filesDir, SCREENSHOT_DIR)
+    }
+
+    /**
+     * Clear all screenshots
+     */
+    fun clearScreenshots() {
+        val screenshotDir = getScreenshotDirectory()
+        if (screenshotDir.exists()) {
+            screenshotDir.listFiles()?.forEach { file ->
+                file.delete()
+            }
+        }
+    }
+
+    /**
+     * Get all screenshot files
+     */
+    fun getScreenshots(): List<File> {
+        val screenshotDir = getScreenshotDirectory()
+        return if (screenshotDir.exists()) {
+            screenshotDir.listFiles()?.toList() ?: emptyList()
+        } else {
+            emptyList()
+        }
+    }
+}

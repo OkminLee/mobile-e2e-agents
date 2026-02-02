@@ -1,0 +1,210 @@
+package {{PACKAGE}}
+
+import android.Manifest
+import android.content.Context
+import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.rule.GrantPermissionRule
+import org.junit.After
+import org.junit.Before
+import org.junit.Rule
+import org.junit.runner.RunWith
+import {{PACKAGE}}.support.ScreenshotHelper
+import {{PACKAGE}}.support.TestDataManager
+
+/**
+ * Base class for all UI tests (View-based with Espresso)
+ *
+ * Features:
+ * - Automatic app state reset
+ * - Permission handling
+ * - Screenshot capture on failure
+ * - Test data management
+ *
+ * Configuration:
+ * - Override `shouldResetState` to control state reset
+ * - Override `shouldGrantPermissions` to control permissions
+ * - Override `setUp()` for custom initialization
+ *
+ * Usage:
+ * ```kotlin
+ * class LoginTests : BaseUITest() {
+ *     override val shouldResetState = true
+ *
+ *     @Test
+ *     fun test_login_succeeds() {
+ *         // test implementation
+ *     }
+ * }
+ * ```
+ */
+@RunWith(AndroidJUnit4::class)
+abstract class BaseUITest {
+
+    // MARK: - Configuration
+
+    /**
+     * Whether to reset app state before each test
+     */
+    open val shouldResetState: Boolean = true
+
+    /**
+     * Whether to automatically grant permissions
+     */
+    open val shouldGrantPermissions: Boolean = true
+
+    /**
+     * Whether to capture screenshot on test failure
+     */
+    open val shouldCaptureScreenshotOnFailure: Boolean = true
+
+    // MARK: - Rules
+
+    @get:Rule
+    val activityRule = ActivityScenarioRule({{MAIN_ACTIVITY}}::class.java)
+
+    @get:Rule
+    val permissionRule: GrantPermissionRule = GrantPermissionRule.grant(
+        Manifest.permission.POST_NOTIFICATIONS
+        // Add more permissions as needed:
+        // Manifest.permission.ACCESS_FINE_LOCATION,
+        // Manifest.permission.CAMERA,
+    )
+
+    // MARK: - Context
+
+    /**
+     * Application context (target app)
+     */
+    protected val context: Context by lazy {
+        InstrumentationRegistry.getInstrumentation().targetContext
+    }
+
+    /**
+     * Test context (test app)
+     */
+    protected val testContext: Context by lazy {
+        InstrumentationRegistry.getInstrumentation().context
+    }
+
+    // MARK: - Test Data
+
+    /**
+     * Test data manager for setting up/cleaning test data
+     */
+    protected val testData: TestDataManager by lazy {
+        TestDataManager(context)
+    }
+
+    // MARK: - Lifecycle
+
+    @Before
+    open fun setUp() {
+        if (shouldResetState) {
+            resetAppState()
+        }
+        onSetUp()
+    }
+
+    @After
+    open fun tearDown() {
+        if (shouldCaptureScreenshotOnFailure) {
+            captureScreenshotOnFailure()
+        }
+        onTearDown()
+    }
+
+    /**
+     * Override for custom setup logic
+     */
+    protected open fun onSetUp() {
+        // Override in subclass
+    }
+
+    /**
+     * Override for custom teardown logic
+     */
+    protected open fun onTearDown() {
+        // Override in subclass
+    }
+
+    // MARK: - State Management
+
+    /**
+     * Reset app state to clean slate
+     */
+    private fun resetAppState() {
+        // Clear SharedPreferences
+        clearSharedPreferences()
+
+        // Clear test data
+        testData.clearAll()
+
+        // Additional cleanup can be added here
+    }
+
+    /**
+     * Clear all SharedPreferences
+     */
+    private fun clearSharedPreferences() {
+        val prefsDir = context.filesDir.parentFile?.resolve("shared_prefs")
+        prefsDir?.listFiles()?.forEach { file ->
+            val prefName = file.nameWithoutExtension
+            context.getSharedPreferences(prefName, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .apply()
+        }
+    }
+
+    // MARK: - Screenshots
+
+    /**
+     * Capture screenshot with given name
+     */
+    protected fun captureScreenshot(name: String) {
+        ScreenshotHelper.capture(name, activityRule)
+    }
+
+    /**
+     * Capture screenshot on test failure
+     */
+    private fun captureScreenshotOnFailure() {
+        // This is handled by test rules or custom implementation
+        // Can integrate with TestWatcher for automatic capture
+    }
+
+    // MARK: - Helpers
+
+    /**
+     * Get string resource by ID
+     */
+    protected fun getString(resId: Int): String {
+        return context.getString(resId)
+    }
+
+    /**
+     * Get string resource with format args
+     */
+    protected fun getString(resId: Int, vararg formatArgs: Any): String {
+        return context.getString(resId, *formatArgs)
+    }
+
+    /**
+     * Wait for specified milliseconds
+     * Note: Prefer explicit waits over this method
+     */
+    protected fun waitFor(milliseconds: Long) {
+        Thread.sleep(milliseconds)
+    }
+
+    /**
+     * Run on UI thread
+     */
+    protected fun runOnUiThread(action: () -> Unit) {
+        activityRule.scenario.onActivity { activity ->
+            activity.runOnUiThread(action)
+        }
+    }
+}

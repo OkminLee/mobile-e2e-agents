@@ -1,0 +1,257 @@
+package {{PACKAGE}}.pages
+
+import android.view.View
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.ViewInteraction
+import androidx.test.espresso.action.ViewActions.*
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.*
+import org.hamcrest.Matcher
+import {{PACKAGE}}.support.ViewWait
+
+/**
+ * Base class for all Page Objects (Espresso/View-based)
+ *
+ * Provides common functionality for:
+ * - Element finding
+ * - Safe actions with automatic waiting
+ * - Screen verification
+ *
+ * Usage:
+ * ```kotlin
+ * class LoginPage : BasePage() {
+ *     override val screenIdentifier = withId(R.id.login_screen)
+ *
+ *     fun tapSubmit() = apply {
+ *         submitButton.safeTap()
+ *     }
+ * }
+ * ```
+ */
+abstract class BasePage {
+
+    // MARK: - Abstract Properties
+
+    /**
+     * Main element that identifies this screen.
+     * Used for verifyScreenDisplayed() checks.
+     */
+    abstract val screenIdentifier: Matcher<View>
+
+    // MARK: - Verification
+
+    /**
+     * Verify screen is displayed within timeout
+     * @param timeoutMs Maximum time to wait for screen
+     * @return true if screen is displayed, false otherwise
+     */
+    fun verifyScreenDisplayed(timeoutMs: Long = 5000): Boolean {
+        return try {
+            waitForView(screenIdentifier, timeoutMs)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // MARK: - Element Finders
+
+    /**
+     * Find view by resource ID
+     */
+    protected fun viewById(id: Int): ViewInteraction {
+        return onView(withId(id))
+    }
+
+    /**
+     * Find view by exact text
+     */
+    protected fun viewByText(text: String): ViewInteraction {
+        return onView(withText(text))
+    }
+
+    /**
+     * Find view by text containing substring
+     */
+    protected fun viewByTextContains(text: String): ViewInteraction {
+        return onView(withText(org.hamcrest.Matchers.containsString(text)))
+    }
+
+    /**
+     * Find view by content description (accessibility)
+     */
+    protected fun viewByContentDescription(desc: String): ViewInteraction {
+        return onView(withContentDescription(desc))
+    }
+
+    /**
+     * Find view by tag
+     */
+    protected fun viewByTag(tag: String): ViewInteraction {
+        return onView(withTagValue(org.hamcrest.Matchers.`is`(tag as Any)))
+    }
+
+    /**
+     * Find view by hint text
+     */
+    protected fun viewByHint(hint: String): ViewInteraction {
+        return onView(withHint(hint))
+    }
+
+    /**
+     * Find view by custom matcher
+     */
+    protected fun viewByMatcher(matcher: Matcher<View>): ViewInteraction {
+        return onView(matcher)
+    }
+
+    // MARK: - Safe Actions
+
+    /**
+     * Tap element with automatic wait
+     */
+    protected fun ViewInteraction.safeTap(): ViewInteraction {
+        waitForView(this)
+        return this.perform(click())
+    }
+
+    /**
+     * Long press element with automatic wait
+     */
+    protected fun ViewInteraction.safeLongPress(): ViewInteraction {
+        waitForView(this)
+        return this.perform(longClick())
+    }
+
+    /**
+     * Double tap element with automatic wait
+     */
+    protected fun ViewInteraction.safeDoubleTap(): ViewInteraction {
+        waitForView(this)
+        return this.perform(doubleClick())
+    }
+
+    /**
+     * Clear text and type new text with automatic wait
+     */
+    protected fun ViewInteraction.safeClearAndTypeText(text: String): ViewInteraction {
+        waitForView(this)
+        return this.perform(clearText(), typeText(text), closeSoftKeyboard())
+    }
+
+    /**
+     * Type text without clearing (append) with automatic wait
+     */
+    protected fun ViewInteraction.safeTypeText(text: String): ViewInteraction {
+        waitForView(this)
+        return this.perform(typeText(text), closeSoftKeyboard())
+    }
+
+    /**
+     * Replace text with automatic wait
+     */
+    protected fun ViewInteraction.safeReplaceText(text: String): ViewInteraction {
+        waitForView(this)
+        return this.perform(replaceText(text), closeSoftKeyboard())
+    }
+
+    /**
+     * Clear text field with automatic wait
+     */
+    protected fun ViewInteraction.safeClearText(): ViewInteraction {
+        waitForView(this)
+        return this.perform(clearText())
+    }
+
+    // MARK: - Waiting
+
+    /**
+     * Wait for view matching given matcher
+     */
+    protected fun waitForView(
+        matcher: Matcher<View>,
+        timeoutMs: Long = 5000
+    ) {
+        ViewWait.waitForView(matcher, timeoutMs)
+    }
+
+    /**
+     * Wait for ViewInteraction to be displayed
+     */
+    protected fun waitForView(
+        interaction: ViewInteraction,
+        timeoutMs: Long = 5000
+    ) {
+        ViewWait.waitForViewInteraction(interaction, timeoutMs)
+    }
+
+    /**
+     * Wait for view to disappear
+     */
+    protected fun waitForViewToDisappear(
+        matcher: Matcher<View>,
+        timeoutMs: Long = 5000
+    ) {
+        ViewWait.waitForViewToDisappear(matcher, timeoutMs)
+    }
+
+    // MARK: - Scrolling
+
+    /**
+     * Scroll view into visible area
+     */
+    protected fun ViewInteraction.scrollIntoView(): ViewInteraction {
+        return this.perform(scrollTo())
+    }
+
+    // MARK: - Assertions
+
+    /**
+     * Check if view is displayed
+     */
+    protected fun ViewInteraction.assertDisplayed(): ViewInteraction {
+        return this.check(matches(isDisplayed()))
+    }
+
+    /**
+     * Check if view is enabled
+     */
+    protected fun ViewInteraction.assertEnabled(): ViewInteraction {
+        return this.check(matches(isEnabled()))
+    }
+
+    /**
+     * Check if view is not enabled
+     */
+    protected fun ViewInteraction.assertDisabled(): ViewInteraction {
+        return this.check(matches(org.hamcrest.Matchers.not(isEnabled())))
+    }
+
+    /**
+     * Check view text equals expected
+     */
+    protected fun ViewInteraction.assertTextEquals(expected: String): ViewInteraction {
+        return this.check(matches(withText(expected)))
+    }
+
+    /**
+     * Check view text contains expected
+     */
+    protected fun ViewInteraction.assertTextContains(expected: String): ViewInteraction {
+        return this.check(matches(withText(org.hamcrest.Matchers.containsString(expected))))
+    }
+
+    /**
+     * Check if view is checked (checkbox, switch)
+     */
+    protected fun ViewInteraction.assertChecked(): ViewInteraction {
+        return this.check(matches(isChecked()))
+    }
+
+    /**
+     * Check if view is not checked
+     */
+    protected fun ViewInteraction.assertNotChecked(): ViewInteraction {
+        return this.check(matches(isNotChecked()))
+    }
+}

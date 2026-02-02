@@ -1,0 +1,89 @@
+package {{PACKAGE}}.pages
+
+import android.view.View
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.matcher.ViewMatchers.*
+import org.hamcrest.Matcher
+import org.hamcrest.Matchers.allOf
+import {{PACKAGE}}.R
+
+/**
+ * Page Object for {{SCREEN_NAME}} screen
+ *
+ * This page represents the {{SCREEN_NAME}} screen and provides:
+ * - Element accessors
+ * - Action methods
+ * - Verification methods
+ *
+ * Accessibility Identifiers:
+ * {{IDENTIFIERS}}
+ *
+ * Usage:
+ * ```kotlin
+ * val {{SCREEN_NAME_LOWER}}Page = {{SCREEN_NAME}}Page()
+ * {{SCREEN_NAME_LOWER}}Page
+ *     .enterUsername("test")
+ *     .enterPassword("pass")
+ *     .tapSubmit()
+ * ```
+ */
+class {{SCREEN_NAME}}Page : BasePage() {
+
+    // MARK: - Screen Identifier
+
+    override val screenIdentifier: Matcher<View>
+        get() = withId(R.id.{{SCREEN_ID}})
+
+    // MARK: - Elements
+
+    {{ELEMENTS}}
+
+    // MARK: - Verification
+
+    /**
+     * Verify {{SCREEN_NAME}} screen is displayed
+     */
+    fun verify{{SCREEN_NAME}}Displayed(): Boolean {
+        return verifyScreenDisplayed()
+    }
+
+    {{VERIFICATION_METHODS}}
+
+    // MARK: - Actions
+
+    {{ACTIONS}}
+
+    // MARK: - Compound Actions
+
+    {{COMPOUND_ACTIONS}}
+}
+
+/*
+ * Element Template:
+ *
+ * private val exampleButton
+ *     get() = viewById(R.id.{{screen_name}}_button_example)
+ *
+ * private val exampleTextField
+ *     get() = viewById(R.id.{{screen_name}}_textField_example)
+ *
+ * private val exampleLabel
+ *     get() = viewById(R.id.{{screen_name}}_label_example)
+ *
+ * Action Template:
+ *
+ * fun tapExample() = apply {
+ *     exampleButton.safeTap()
+ * }
+ *
+ * fun enterExample(text: String) = apply {
+ *     exampleTextField.safeClearAndTypeText(text)
+ * }
+ *
+ * Navigation Template:
+ *
+ * fun tapSubmit(): NextPage {
+ *     submitButton.safeTap()
+ *     return NextPage()
+ * }
+ */

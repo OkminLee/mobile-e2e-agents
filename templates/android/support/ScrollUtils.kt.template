@@ -1,0 +1,260 @@
+package {{PACKAGE}}.support
+
+import android.view.View
+import androidx.recyclerview.widget.RecyclerView
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.UiController
+import androidx.test.espresso.ViewAction
+import androidx.test.espresso.action.ViewActions.swipeDown
+import androidx.test.espresso.action.ViewActions.swipeLeft
+import androidx.test.espresso.action.ViewActions.swipeRight
+import androidx.test.espresso.action.ViewActions.swipeUp
+import androidx.test.espresso.contrib.RecyclerViewActions
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import org.hamcrest.Matcher
+import org.hamcrest.Matchers.allOf
+
+/**
+ * Scroll utilities for Espresso tests
+ *
+ * Provides convenient methods for scrolling various view types:
+ * - RecyclerView
+ * - ScrollView
+ * - NestedScrollView
+ * - ViewPager
+ *
+ * Usage:
+ * ```kotlin
+ * // Scroll RecyclerView to position
+ * ScrollUtils.scrollRecyclerViewToPosition(R.id.recyclerView, 10)
+ *
+ * // Scroll to view matching criteria
+ * ScrollUtils.scrollRecyclerViewTo(R.id.recyclerView, withText("Item"))
+ *
+ * // Perform swipe to refresh
+ * ScrollUtils.swipeToRefresh(R.id.swipeRefresh)
+ * ```
+ */
+object ScrollUtils {
+
+    // ============================================================
+    // MARK: - RecyclerView Scrolling
+    // ============================================================
+
+    /**
+     * Scroll RecyclerView to specific position
+     */
+    fun scrollRecyclerViewToPosition(recyclerViewId: Int, position: Int) {
+        onView(allOf(withId(recyclerViewId), isDisplayed()))
+            .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(position))
+    }
+
+    /**
+     * Scroll RecyclerView to item matching holder matcher
+     */
+    fun <VH : RecyclerView.ViewHolder> scrollRecyclerViewTo(
+        recyclerViewId: Int,
+        holderMatcher: Matcher<VH>
+    ) {
+        onView(allOf(withId(recyclerViewId), isDisplayed()))
+            .perform(RecyclerViewActions.scrollToHolder(holderMatcher))
+    }
+
+    /**
+     * Scroll RecyclerView to item containing view matching matcher
+     */
+    fun scrollRecyclerViewToView(
+        recyclerViewId: Int,
+        viewMatcher: Matcher<View>
+    ) {
+        onView(allOf(withId(recyclerViewId), isDisplayed()))
+            .perform(
+                RecyclerViewActions.scrollTo<RecyclerView.ViewHolder>(
+                    hasDescendant(viewMatcher)
+                )
+            )
+    }
+
+    /**
+     * Click on item at position in RecyclerView
+     */
+    fun clickRecyclerViewItemAt(recyclerViewId: Int, position: Int) {
+        onView(allOf(withId(recyclerViewId), isDisplayed()))
+            .perform(
+                RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(
+                    position,
+                    click()
+                )
+            )
+    }
+
+    /**
+     * Perform action on RecyclerView item at position
+     */
+    fun performOnRecyclerViewItemAt(
+        recyclerViewId: Int,
+        position: Int,
+        action: ViewAction
+    ) {
+        onView(allOf(withId(recyclerViewId), isDisplayed()))
+            .perform(
+                RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(
+                    position,
+                    action
+                )
+            )
+    }
+
+    /**
+     * Get RecyclerView item count
+     */
+    fun getRecyclerViewItemCount(recyclerViewId: Int): Int {
+        var count = 0
+        onView(allOf(withId(recyclerViewId), isDisplayed()))
+            .perform(object : ViewAction {
+                override fun getConstraints(): Matcher<View> =
+                    isAssignableFrom(RecyclerView::class.java)
+
+                override fun getDescription(): String = "get item count"
+
+                override fun perform(uiController: UiController, view: View) {
+                    count = (view as RecyclerView).adapter?.itemCount ?: 0
+                }
+            })
+        return count
+    }
+
+    // ============================================================
+    // MARK: - Generic Scrolling
+    // ============================================================
+
+    /**
+     * Scroll view into visible area (works with ScrollView, NestedScrollView)
+     */
+    fun scrollIntoView(viewMatcher: Matcher<View>) {
+        onView(viewMatcher).perform(scrollTo())
+    }
+
+    /**
+     * Swipe up on a view
+     */
+    fun swipeUp(viewMatcher: Matcher<View>) {
+        onView(viewMatcher).perform(swipeUp())
+    }
+
+    /**
+     * Swipe down on a view
+     */
+    fun swipeDown(viewMatcher: Matcher<View>) {
+        onView(viewMatcher).perform(swipeDown())
+    }
+
+    /**
+     * Swipe left on a view
+     */
+    fun swipeLeft(viewMatcher: Matcher<View>) {
+        onView(viewMatcher).perform(swipeLeft())
+    }
+
+    /**
+     * Swipe right on a view
+     */
+    fun swipeRight(viewMatcher: Matcher<View>) {
+        onView(viewMatcher).perform(swipeRight())
+    }
+
+    // ============================================================
+    // MARK: - Swipe to Refresh
+    // ============================================================
+
+    /**
+     * Perform swipe to refresh gesture
+     */
+    fun swipeToRefresh(swipeRefreshId: Int) {
+        onView(allOf(withId(swipeRefreshId), isDisplayed()))
+            .perform(swipeDown())
+    }
+
+    /**
+     * Perform swipe to refresh and wait for completion
+     */
+    fun swipeToRefreshAndWait(
+        swipeRefreshId: Int,
+        loadingMatcher: Matcher<View>,
+        timeoutMs: Long = 10000
+    ) {
+        swipeToRefresh(swipeRefreshId)
+        ViewWait.waitForViewToDisappear(loadingMatcher, timeoutMs)
+    }
+
+    // ============================================================
+    // MARK: - Custom Scroll Actions
+    // ============================================================
+
+    /**
+     * Scroll to specific percentage of view
+     */
+    fun scrollToPercentage(viewMatcher: Matcher<View>, percentage: Float): ViewAction {
+        return object : ViewAction {
+            override fun getConstraints(): Matcher<View> = isDisplayed()
+
+            override fun getDescription(): String = "scroll to $percentage%"
+
+            override fun perform(uiController: UiController, view: View) {
+                val scrollableHeight = view.height - view.paddingTop - view.paddingBottom
+                val targetY = (scrollableHeight * percentage).toInt()
+                view.scrollTo(0, targetY)
+                uiController.loopMainThreadUntilIdle()
+            }
+        }
+    }
+
+    /**
+     * Scroll until view is found or max scrolls reached
+     */
+    fun scrollUntilViewFound(
+        scrollableViewMatcher: Matcher<View>,
+        targetViewMatcher: Matcher<View>,
+        maxScrolls: Int = 10,
+        scrollDirection: ScrollDirection = ScrollDirection.DOWN
+    ): Boolean {
+        repeat(maxScrolls) {
+            if (ViewWait.viewExists(targetViewMatcher)) {
+                return true
+            }
+
+            val action = when (scrollDirection) {
+                ScrollDirection.UP -> swipeDown()
+                ScrollDirection.DOWN -> swipeUp()
+                ScrollDirection.LEFT -> swipeRight()
+                ScrollDirection.RIGHT -> swipeLeft()
+            }
+
+            onView(scrollableViewMatcher).perform(action)
+            Thread.sleep(200) // Wait for scroll to settle
+        }
+
+        return ViewWait.viewExists(targetViewMatcher)
+    }
+
+    enum class ScrollDirection {
+        UP, DOWN, LEFT, RIGHT
+    }
+
+    // ============================================================
+    // MARK: - Helper Functions (imported from ViewMatchers)
+    // ============================================================
+
+    private fun withId(id: Int): Matcher<View> =
+        androidx.test.espresso.matcher.ViewMatchers.withId(id)
+
+    private fun hasDescendant(matcher: Matcher<View>): Matcher<View> =
+        androidx.test.espresso.matcher.ViewMatchers.hasDescendant(matcher)
+
+    private fun scrollTo(): ViewAction =
+        androidx.test.espresso.action.ViewActions.scrollTo()
+
+    private fun click(): ViewAction =
+        androidx.test.espresso.action.ViewActions.click()
+}

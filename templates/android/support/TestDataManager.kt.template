@@ -1,0 +1,260 @@
+package {{PACKAGE}}.support
+
+import android.content.Context
+import android.content.SharedPreferences
+
+/**
+ * Test Data Manager for managing test state and data
+ *
+ * Provides utilities for:
+ * - Clearing app state between tests
+ * - Setting up test data
+ * - Managing SharedPreferences
+ * - Database operations (if applicable)
+ *
+ * Usage:
+ * ```kotlin
+ * val testData = TestDataManager(context)
+ *
+ * // Clear all data
+ * testData.clearAll()
+ *
+ * // Set up specific test state
+ * testData.setLoggedInUser("testuser@example.com")
+ * testData.setOnboardingComplete(true)
+ * ```
+ */
+class TestDataManager(private val context: Context) {
+
+    // ============================================================
+    // MARK: - SharedPreferences Management
+    // ============================================================
+
+    /**
+     * Clear all SharedPreferences files
+     */
+    fun clearAllSharedPreferences() {
+        val prefsDir = context.filesDir.parentFile?.resolve("shared_prefs")
+        prefsDir?.listFiles()?.forEach { file ->
+            val prefName = file.nameWithoutExtension
+            context.getSharedPreferences(prefName, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .apply()
+        }
+    }
+
+    /**
+     * Clear specific SharedPreferences
+     */
+    fun clearSharedPreferences(name: String) {
+        context.getSharedPreferences(name, Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
+    }
+
+    /**
+     * Get SharedPreferences editor
+     */
+    fun getPrefsEditor(name: String = "app_prefs"): SharedPreferences.Editor {
+        return context.getSharedPreferences(name, Context.MODE_PRIVATE).edit()
+    }
+
+    /**
+     * Get SharedPreferences
+     */
+    fun getPrefs(name: String = "app_prefs"): SharedPreferences {
+        return context.getSharedPreferences(name, Context.MODE_PRIVATE)
+    }
+
+    // ============================================================
+    // MARK: - Database Management
+    // ============================================================
+
+    /**
+     * Clear all databases
+     */
+    fun clearAllDatabases() {
+        context.databaseList().forEach { dbName ->
+            context.deleteDatabase(dbName)
+        }
+    }
+
+    /**
+     * Clear specific database
+     */
+    fun clearDatabase(name: String) {
+        context.deleteDatabase(name)
+    }
+
+    // ============================================================
+    // MARK: - File Management
+    // ============================================================
+
+    /**
+     * Clear all internal files
+     */
+    fun clearInternalFiles() {
+        context.filesDir.listFiles()?.forEach { file ->
+            file.deleteRecursively()
+        }
+    }
+
+    /**
+     * Clear cache directory
+     */
+    fun clearCache() {
+        context.cacheDir.listFiles()?.forEach { file ->
+            file.deleteRecursively()
+        }
+    }
+
+    /**
+     * Clear external files (if accessible)
+     */
+    fun clearExternalFiles() {
+        context.getExternalFilesDir(null)?.listFiles()?.forEach { file ->
+            file.deleteRecursively()
+        }
+    }
+
+    // ============================================================
+    // MARK: - Complete Reset
+    // ============================================================
+
+    /**
+     * Clear all app data (SharedPreferences, Databases, Files)
+     */
+    fun clearAll() {
+        clearAllSharedPreferences()
+        clearAllDatabases()
+        clearInternalFiles()
+        clearCache()
+    }
+
+    // ============================================================
+    // MARK: - Test State Setup (Customize for your app)
+    // ============================================================
+
+    /**
+     * Set logged in user state
+     */
+    fun setLoggedInUser(email: String, token: String = "test_token") {
+        getPrefsEditor().apply {
+            putString("user_email", email)
+            putString("auth_token", token)
+            putBoolean("is_logged_in", true)
+            apply()
+        }
+    }
+
+    /**
+     * Clear logged in user
+     */
+    fun clearLoggedInUser() {
+        getPrefsEditor().apply {
+            remove("user_email")
+            remove("auth_token")
+            putBoolean("is_logged_in", false)
+            apply()
+        }
+    }
+
+    /**
+     * Set onboarding complete
+     */
+    fun setOnboardingComplete(complete: Boolean = true) {
+        getPrefsEditor().apply {
+            putBoolean("onboarding_complete", complete)
+            apply()
+        }
+    }
+
+    /**
+     * Set first launch state
+     */
+    fun setFirstLaunch(isFirst: Boolean) {
+        getPrefsEditor().apply {
+            putBoolean("is_first_launch", isFirst)
+            apply()
+        }
+    }
+
+    /**
+     * Set feature flag for testing
+     */
+    fun setFeatureFlag(flagName: String, enabled: Boolean) {
+        getPrefsEditor("feature_flags").apply {
+            putBoolean(flagName, enabled)
+            apply()
+        }
+    }
+
+    /**
+     * Clear all feature flags
+     */
+    fun clearFeatureFlags() {
+        clearSharedPreferences("feature_flags")
+    }
+
+    // ============================================================
+    // MARK: - Test Data Factories (Customize for your app)
+    // ============================================================
+
+    /**
+     * Test user credentials
+     */
+    object TestUsers {
+        val validUser = TestUser(
+            email = "testuser@example.com",
+            password = "password123",
+            displayName = "Test User"
+        )
+
+        val premiumUser = TestUser(
+            email = "premium@example.com",
+            password = "password123",
+            displayName = "Premium User",
+            isPremium = true
+        )
+
+        val invalidUser = TestUser(
+            email = "invalid@example.com",
+            password = "wrongpassword",
+            displayName = "Invalid User"
+        )
+    }
+
+    data class TestUser(
+        val email: String,
+        val password: String,
+        val displayName: String,
+        val isPremium: Boolean = false
+    )
+
+    // ============================================================
+    // MARK: - Verification Helpers
+    // ============================================================
+
+    /**
+     * Check if user is logged in
+     */
+    fun isLoggedIn(): Boolean {
+        return getPrefs().getBoolean("is_logged_in", false)
+    }
+
+    /**
+     * Check if onboarding is complete
+     */
+    fun isOnboardingComplete(): Boolean {
+        return getPrefs().getBoolean("onboarding_complete", false)
+    }
+
+    /**
+     * Check feature flag value
+     */
+    fun isFeatureFlagEnabled(flagName: String): Boolean {
+        return getPrefs("feature_flags").getBoolean(flagName, false)
+    }
+}

@@ -1,0 +1,112 @@
+package {{PACKAGE}}.tests
+
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
+import {{PACKAGE}}.BaseUITest
+import {{PACKAGE}}.pages.*
+import {{PACKAGE}}.flows.*
+
+/**
+ * {{TEST_CLASS_NAME}} Tests
+ *
+ * Test cases for {{FEATURE_NAME}} functionality.
+ *
+ * Test Naming Convention:
+ * test_{action}_{outcome}[_{condition}]
+ *
+ * Examples:
+ * - test_login_succeeds_withValidCredentials
+ * - test_login_fails_withInvalidPassword
+ * - test_submit_isDisabled_whenFieldsEmpty
+ */
+class {{TEST_CLASS_NAME}}Tests : BaseUITest() {
+
+    // MARK: - Properties
+
+    {{PAGE_PROPERTIES}}
+
+    // MARK: - Configuration
+
+    override val shouldResetState: Boolean = true
+
+    // MARK: - Setup
+
+    @Before
+    override fun setUp() {
+        super.setUp()
+        // Additional setup for this test class
+        {{SETUP_CODE}}
+    }
+
+    // MARK: - Test Data
+
+    object TestData {
+        {{TEST_DATA}}
+    }
+
+    // MARK: - Tests
+
+    {{TEST_METHODS}}
+}
+
+/*
+ * Test Template:
+ *
+ * @Test
+ * fun test_login_succeeds_withValidCredentials() {
+ *     // Given
+ *     assertTrue(loginPage.verifyScreenDisplayed())
+ *     captureScreenshot("01_login_screen")
+ *
+ *     // When
+ *     val homePage = loginPage.login(
+ *         username = TestData.validUsername,
+ *         password = TestData.validPassword
+ *     )
+ *
+ *     // Then
+ *     assertTrue(homePage.verifyScreenDisplayed())
+ *     captureScreenshot("02_home_screen")
+ * }
+ *
+ * @Test
+ * fun test_login_fails_withInvalidPassword() {
+ *     // Given
+ *     assertTrue(loginPage.verifyScreenDisplayed())
+ *
+ *     // When
+ *     loginPage
+ *         .enterUsername(TestData.validUsername)
+ *         .enterPassword(TestData.invalidPassword)
+ *         .tapSubmit()
+ *
+ *     // Then
+ *     assertTrue(loginPage.verifyErrorDisplayed())
+ *     assertTrue(loginPage.verifyErrorMessage("Invalid credentials"))
+ * }
+ *
+ * @Test
+ * fun test_submit_isDisabled_whenFieldsEmpty() {
+ *     // Given
+ *     assertTrue(loginPage.verifyScreenDisplayed())
+ *
+ *     // When - no input
+ *
+ *     // Then
+ *     assertTrue(loginPage.verifySubmitDisabled())
+ * }
+ *
+ * Page Property Template:
+ *
+ * private val loginPage by lazy { LoginPage() }
+ * private val homePage by lazy { HomePage() }
+ *
+ * Test Data Template:
+ *
+ * object TestData {
+ *     const val validUsername = "testuser"
+ *     const val validPassword = "password123"
+ *     const val invalidPassword = "wrong"
+ * }
+ */

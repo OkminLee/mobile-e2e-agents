@@ -37,10 +37,11 @@ Initialize E2E test infrastructure in an iOS or Android project.
    - Find app module
    - Check if androidTest directory exists
    - Determine package structure
+   - Detect Compose usage (look for `@Composable` annotations)
 
-### Phase 2: Structure Generation (iOS)
+### Phase 2: Structure Generation
 
-Create the following structure:
+#### iOS Structure
 
 ```
 {ProjectName}UITests/
@@ -61,23 +62,31 @@ Create the following structure:
 └── README.md
 ```
 
+#### Android Structure
+
+```
+app/src/androidTest/java/{package}/
+├── support/
+│   ├── ViewWait.kt
+│   ├── ScrollUtils.kt
+│   ├── SystemHelper.kt
+│   ├── TestDataManager.kt
+│   └── ScreenshotHelper.kt
+├── pages/
+│   ├── BasePage.kt              # Espresso base
+│   └── ComposeBasePage.kt       # Compose base (if Compose detected)
+├── flows/
+│   └── .gitkeep
+├── tests/
+│   ├── BaseUITest.kt            # Espresso base test
+│   └── ComposeBaseUITest.kt     # Compose base test (if Compose detected)
+└── README.md
+```
+
 ### Phase 3: Template Processing
 
-For each template file:
-1. Read from `templates/ios/xcuitest/` or `templates/ios/support/`
-2. Replace template variables:
-   - `{{PROJECT_NAME}}` → Detected project name
-   - `{{BUNDLE_IDENTIFIER}}` → App bundle identifier + ".UITests"
-3. Write to target location
-
-### Phase 4: Xcode Integration (iOS)
-
-Provide instructions for:
-1. Adding UITest target in Xcode (if not exists)
-2. Adding generated files to target
-3. Setting up scheme for testing
-
-## Template Variables
+#### iOS Templates
+Source: `templates/ios/xcuitest/` and `templates/ios/support/`
 
 | Variable | Description | Example |
 |----------|-------------|---------|
@@ -85,25 +94,63 @@ Provide instructions for:
 | `{{BUNDLE_IDENTIFIER}}` | App bundle ID | `com.example.myapp` |
 | `{{MIN_IOS_VERSION}}` | Minimum iOS version | `17.0` |
 
+#### Android Templates
+Source: `templates/android/espresso/`, `templates/android/compose/`, and `templates/android/support/`
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{{PACKAGE}}` | Package name | `com.example.myapp` |
+| `{{MAIN_ACTIVITY}}` | Main activity class | `MainActivity` |
+| `{{COMPOSE_BOM_VERSION}}` | Compose BOM version | `2024.02.00` |
+
+### Phase 4: Platform Integration
+
+#### iOS - Xcode Integration
+1. Adding UITest target in Xcode (if not exists)
+2. Adding generated files to target
+3. Setting up scheme for testing
+
+#### Android - Gradle Integration
+1. Update `app/build.gradle.kts` with test dependencies
+2. Configure test runner and orchestrator
+3. Add managed device configuration (optional)
+
 ## Output
 
 After running `/e2e-init`:
 
-1. **Files created** in `{ProjectName}UITests/`
+1. **Files created** in appropriate test directory
 2. **README** with setup instructions
 3. **Guidance** on next steps
 
+### iOS Output
+- Files in `{ProjectName}UITests/`
+- Instructions for Xcode target setup
+
+### Android Output
+- Files in `app/src/androidTest/java/{package}/`
+- Updated `build.gradle.kts` with dependencies
+- Instructions for running tests
+
 ## Next Steps After Init
 
+### iOS
 1. Add UITest target in Xcode (if needed)
 2. Run `/e2e-pom <ScreenName>` to generate page objects
 3. Run `/e2e-test "<scenario>"` to generate test cases
 
+### Android
+1. Sync Gradle to download dependencies
+2. Run `/e2e-pom <ScreenName>` to generate page objects
+3. Run `/e2e-test "<scenario>"` to generate test cases
+4. Run `./gradlew connectedDebugAndroidTest` to execute
+
 ## Error Handling
 
 - If project type cannot be detected: Ask user to specify
-- If UITest target exists: Ask to overwrite or skip
+- If test directory exists: Ask to overwrite or skip
 - If templates missing: Show error with recovery steps
+- If Compose detected but not sure: Ask user to confirm
 
 ---
 
@@ -116,3 +163,24 @@ When implementing this command:
 3. Use `Write` to create files from templates
 4. Provide clear progress feedback
 5. Handle errors gracefully with recovery suggestions
+
+### Android-Specific Detection
+
+```kotlin
+// Compose detection patterns
+- @Composable annotation in source files
+- androidx.compose dependencies in build.gradle
+- setContent { } in Activity files
+```
+
+### Template Selection Logic
+
+```
+if platform == android:
+    if compose_detected:
+        use espresso/* AND compose/* templates
+    else:
+        use espresso/* templates only
+else:
+    use ios/xcuitest/* templates
+```

@@ -198,8 +198,93 @@ If scenario is ambiguous, ask clarifying questions:
 
 ---
 
+## Platform-Specific Output
+
+### iOS Output
+
+File: `{Project}UITests/Sources/Tests/{Feature}Tests.swift`
+
+```swift
+final class LoginTests: BaseUITest {
+    private lazy var loginPage = LoginPage(app: app)
+
+    func test_login_succeeds_withValidCredentials() {
+        // Given
+        XCTAssertTrue(loginPage.verifyScreenDisplayed())
+
+        // When
+        let homePage = loginPage.login(
+            username: TestData.validUsername,
+            password: TestData.validPassword
+        )
+
+        // Then
+        XCTAssertTrue(homePage.verifyScreenDisplayed())
+    }
+}
+```
+
+### Android Output (Compose)
+
+File: `app/src/androidTest/java/{package}/tests/{Feature}Tests.kt`
+
+```kotlin
+class LoginTests : ComposeBaseUITest() {
+    private val loginPage by lazy { LoginPage(composeRule) }
+
+    @Test
+    fun test_login_succeeds_withValidCredentials() {
+        // Given
+        assertTrue(loginPage.verifyScreenDisplayed())
+
+        // When
+        val homePage = loginPage.login(
+            email = TestData.validEmail,
+            password = TestData.validPassword
+        )
+
+        // Then
+        assertTrue(homePage.verifyScreenDisplayed())
+    }
+}
+```
+
+### Android Output (Espresso)
+
+File: `app/src/androidTest/java/{package}/tests/{Feature}Tests.kt`
+
+```kotlin
+class LoginTests : BaseUITest() {
+    private val loginPage by lazy { LoginPage() }
+
+    @Test
+    fun test_login_succeeds_withValidCredentials() {
+        // Given
+        assertTrue(loginPage.verifyScreenDisplayed())
+
+        // When
+        val homePage = loginPage.login(
+            email = TestData.validEmail,
+            password = TestData.validPassword
+        )
+
+        // Then
+        assertTrue(homePage.verifyScreenDisplayed())
+    }
+}
+```
+
+---
+
 ## Agent Reference
 
-This command uses the `ios-test-writer` agent.
+This command uses platform-specific agents:
 
-See: `.claude/agents/ios-test-writer.md`
+| Platform | Agent |
+|----------|-------|
+| iOS | `ios-test-writer` |
+| Android | `android-test-writer` |
+
+See:
+- `.claude/agents/ios-test-writer.md`
+- `.claude/agents/android-test-writer.md`

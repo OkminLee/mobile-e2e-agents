@@ -10,11 +10,12 @@ Generate CI/CD workflow configuration for E2E tests.
 
 ## Parameters
 
-- `--platform <ios|android>`: Target platform (default: ios)
+- `--platform <ios|android>`: Target platform (auto-detected if not specified)
 - `--provider <github|gitlab|bitrise>`: CI provider (default: github)
-- `--fastlane`: Include Fastlane configuration
+- `--fastlane`: Include Fastlane configuration (iOS only)
 - `--slack`: Include Slack notifications
 - `--parallel <n>`: Number of parallel workers
+- `--api-level <level>`: Android API level (default: 33, Android only)
 
 ## Usage Examples
 
@@ -23,6 +24,7 @@ Generate CI/CD workflow configuration for E2E tests.
 /e2e-ci --fastlane --slack
 /e2e-ci --parallel 4
 /e2e-ci --provider gitlab
+/e2e-ci --platform android --api-level 30,33
 ```
 
 ## Workflow
@@ -194,8 +196,63 @@ Python script for generating HTML/PDF reports from xcresult:
 
 ---
 
+## Android-Specific Configuration
+
+### Emulator Setup
+
+```yaml
+- name: Run E2E Tests
+  uses: reactivecircus/android-emulator-runner@v2
+  with:
+    api-level: 33
+    target: google_apis
+    arch: x86_64
+    profile: pixel_6
+    script: ./gradlew connectedDebugAndroidTest
+```
+
+### AVD Caching
+
+```yaml
+- name: AVD Cache
+  uses: actions/cache@v4
+  with:
+    path: |
+      ~/.android/avd/*
+      ~/.android/adb*
+    key: avd-${{ matrix.api-level }}
+```
+
+### Android Gradle Configuration
+
+```kotlin
+android {
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
+    }
+}
+```
+
+### Matrix Testing (Multiple API Levels)
+
+```yaml
+strategy:
+  matrix:
+    api-level: [30, 33]
+```
+
+---
+
 ## Agent Reference
 
-This command uses the `ci-workflow-builder` agent.
+This command uses platform-specific agents:
 
-See: `.claude/agents/ci-workflow-builder.md`
+| Platform | Agent |
+|----------|-------|
+| iOS | `ci-workflow-builder` |
+| Android | `android-ci-builder` |
+
+See:
+- `.claude/agents/ci-workflow-builder.md`
+- `.claude/agents/android-ci-builder.md`

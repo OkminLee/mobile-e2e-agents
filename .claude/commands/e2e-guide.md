@@ -33,6 +33,7 @@ Interactive walkthrough:
 
 1. **Project Assessment**
    - What platform are you testing? (iOS/Android)
+   - For Android: Are you using Jetpack Compose or traditional Views?
    - Do you have existing E2E tests?
    - What's your main testing goal?
 
@@ -40,9 +41,20 @@ Interactive walkthrough:
    - Page Object Model explanation
    - Flow pattern for complex scenarios
    - Test organization best practices
+   - Platform-specific considerations
 
 3. **Next Steps**
    - Suggest relevant commands (`/e2e-init`, `/e2e-pom`, etc.)
+
+### Platform Comparison
+
+| Aspect | iOS (XCUITest) | Android (Espresso) | Android (Compose) |
+|--------|----------------|-------------------|-------------------|
+| Element ID | `accessibilityIdentifier` | `android:id` | `Modifier.testTag()` |
+| Base Class | `BasePage` | `BasePage` | `ComposeBasePage` |
+| Test Base | `BaseUITest` | `BaseUITest` | `ComposeBaseUITest` |
+| Wait API | `waitForExistence()` | `ViewWait.waitForView()` | `waitUntil {}` |
+| CI Runner | `xcodebuild test` | `connectedAndroidTest` | `connectedAndroidTest` |
 
 ### POM Guide (`/e2e-guide pom`)
 
@@ -253,44 +265,53 @@ Debugging test failures:
 ### Common Issues
 
 1. **Element Not Found**
-   - Check accessibility identifier
+   - iOS: Check accessibility identifier
+   - Android (Espresso): Check resource ID
+   - Android (Compose): Check testTag
    - Verify element is on screen
-   - Print view hierarchy: `print(app.debugDescription)`
 
 2. **Timing Issues**
    - Add appropriate waits
    - Check for animations
-   - Use SmartWait utilities
+   - Use SmartWait / ViewWait utilities
 
 3. **State Issues**
    - Verify test isolation
    - Check setup/teardown
-   - Review launch arguments
+   - Review launch arguments / test orchestrator
 
 ### Debugging Tools
 
+#### iOS
 1. **View Hierarchy**
    ```swift
    print(app.debugDescription)
    ```
-
-2. **Screenshot Capture**
-   ```swift
-   captureScreenshot(name: "debug_state")
-   ```
-
-3. **Accessibility Inspector**
+2. **Accessibility Inspector**
    - Xcode > Open Developer Tool > Accessibility Inspector
-   - Inspect live app for identifiers
 
-4. **Test Recording**
-   - Xcode test navigator > Record UI Test
-   - Use as starting point, then refine
+#### Android (Espresso)
+1. **View Hierarchy**
+   ```kotlin
+   // In test failure, hierarchy is printed automatically
+   // Or use: device.dumpWindowHierarchy()
+   ```
+2. **Layout Inspector**
+   - Android Studio > Tools > Layout Inspector
+
+#### Android (Compose)
+1. **Semantics Tree**
+   ```kotlin
+   composeRule.onRoot().printToLog("DEBUG")
+   ```
+2. **Layout Inspector**
+   - Works with Compose nodes
 
 ### Flaky Test Checklist
 - [ ] Using explicit waits (not sleep)?
 - [ ] Test isolated from other tests?
 - [ ] Handling animations properly?
+- [ ] Animations disabled for CI?
 - [ ] Network calls mocked/stable?
 - [ ] Date/time deterministic?
 ```

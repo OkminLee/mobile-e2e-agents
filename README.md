@@ -1,27 +1,27 @@
 # mobile-e2e-agents
 
-> Claude Code Extension for Cross-Platform Mobile E2E Testing
+> 크로스 플랫폼 모바일 E2E 테스트를 위한 Claude Code 확장
 
-A comprehensive toolkit for automating E2E test infrastructure setup, Page Object Model generation, and CI/CD integration for iOS and Android mobile applications.
+iOS 및 Android 모바일 앱의 E2E 테스트 인프라 설정, Page Object Model 생성, CI/CD 통합을 자동화하는 종합 툴킷입니다.
 
-## Features
+## 주요 기능
 
-- **E2E Scaffolding**: Initialize E2E test structure with a single command
-- **POM Generation**: Auto-generate Page Object Model files from view analysis
-- **Test Case Templates**: Create test cases with proper structure and patterns
-- **CI Integration**: Generate GitHub Actions workflows and Fastlane configurations
-- **Cross-Platform**: Support for iOS (XCUITest) and Android (Espresso/UI Automator)
+- **E2E 스캐폴딩**: 단일 명령어로 E2E 테스트 구조 초기화
+- **POM 생성**: 뷰 분석을 통한 Page Object Model 파일 자동 생성
+- **테스트 케이스 템플릿**: 적절한 구조와 패턴으로 테스트 케이스 생성
+- **CI 통합**: GitHub Actions 워크플로우 및 Fastlane 설정 생성
+- **크로스 플랫폼**: iOS (XCUITest) 및 Android (Espresso/UI Automator) 지원
 
-## Installation
+## 설치
 
-### As Claude Code Extension
+### Claude Code 확장으로 설치
 
-1. Clone this repository:
+1. 저장소 클론:
 ```bash
 git clone https://github.com/user/mobile-e2e-agents.git
 ```
 
-2. Add to your project's `.claude/` directory or reference in settings:
+2. 프로젝트의 `.claude/` 디렉토리에 추가하거나 설정에서 참조:
 ```json
 {
   "extensions": [
@@ -30,66 +30,66 @@ git clone https://github.com/user/mobile-e2e-agents.git
 }
 ```
 
-## Quick Start
+## 빠른 시작
 
-### Initialize E2E Test Structure
+### E2E 테스트 구조 초기화
 
 ```bash
 /e2e-init
 ```
 
-This creates:
-- `{Project}UITests/` directory
+생성되는 항목:
+- `{Project}UITests/` 디렉토리
 - `BaseUITest.swift`
 - `UITestConfiguration.swift`
-- Support utilities
+- 지원 유틸리티
 
-### Generate Page Object
+### Page Object 생성
 
 ```bash
 /e2e-pom LoginScreen
 ```
 
-Or with view file analysis:
+뷰 파일 분석과 함께:
 ```bash
 /e2e-pom LoginScreen --view-file Sources/Features/Login/LoginView.swift
 ```
 
-### Create Test Case
+### 테스트 케이스 생성
 
 ```bash
-/e2e-test "User can login with valid credentials"
+/e2e-test "유효한 자격 증명으로 로그인할 수 있다"
 ```
 
-### Generate CI Workflow
+### CI 워크플로우 생성
 
 ```bash
 /e2e-ci
 ```
 
-## Commands Reference
+## 명령어 참조
 
-| Command | Description |
-|---------|-------------|
-| `/e2e-init` | Initialize E2E test structure in your project |
-| `/e2e-pom <ScreenName>` | Generate Page Object for a screen |
-| `/e2e-test "<scenario>"` | Create test case from scenario description |
-| `/e2e-ci` | Generate CI/CD workflow files |
-| `/e2e-guide` | Interactive guide for test scenario design |
+| 명령어 | 설명 |
+|--------|------|
+| `/e2e-init` | 프로젝트에 E2E 테스트 구조 초기화 |
+| `/e2e-pom <ScreenName>` | 화면에 대한 Page Object 생성 |
+| `/e2e-test "<시나리오>"` | 시나리오 설명으로 테스트 케이스 생성 |
+| `/e2e-ci` | CI/CD 워크플로우 파일 생성 |
+| `/e2e-guide` | 테스트 시나리오 설계를 위한 대화형 가이드 |
 
-## Directory Structure
+## 디렉토리 구조
 
 ```
 mobile-e2e-agents/
 ├── .claude/
-│   ├── commands/           # User-facing slash commands
+│   ├── commands/           # 사용자 대상 슬래시 명령어
 │   │   ├── e2e-init.md
 │   │   ├── e2e-pom.md
 │   │   ├── e2e-test.md
 │   │   ├── e2e-ci.md
 │   │   └── e2e-guide.md
 │   │
-│   └── agents/             # Internal processing agents
+│   └── agents/             # 내부 처리 에이전트
 │       ├── ios-pom-generator.md
 │       ├── ios-test-writer.md
 │       ├── android-pom-generator.md
@@ -99,20 +99,20 @@ mobile-e2e-agents/
 │
 ├── templates/
 │   ├── ios/
-│   │   ├── xcuitest/       # XCUITest templates
-│   │   ├── support/        # Utility extensions
-│   │   └── ci/             # CI configuration templates
+│   │   ├── xcuitest/       # XCUITest 템플릿
+│   │   ├── support/        # 유틸리티 익스텐션
+│   │   └── ci/             # CI 설정 템플릿
 │   │
 │   └── android/
-│       ├── espresso/       # Espresso templates (View-based)
-│       ├── compose/        # Compose Testing templates
-│       ├── support/        # Android utilities
-│       └── ci/             # Android CI templates
+│       ├── espresso/       # Espresso 템플릿 (View 기반)
+│       ├── compose/        # Compose Testing 템플릿
+│       ├── support/        # Android 유틸리티
+│       └── ci/             # Android CI 템플릿
 │
-├── examples/               # Sample projects
+├── examples/               # 샘플 프로젝트
 │   └── ios-sample-app/
 │
-└── docs/                   # Documentation
+└── docs/                   # 문서
     ├── getting-started.md
     ├── ios-guide.md
     ├── android-guide.md
@@ -121,11 +121,11 @@ mobile-e2e-agents/
     └── compose-testing.md
 ```
 
-## Generated Code Structure
+## 생성되는 코드 구조
 
 ### iOS
 
-When you run `/e2e-init`, the following structure is created:
+`/e2e-init` 실행 시 생성되는 구조:
 
 ```
 {Project}UITests/
@@ -147,7 +147,7 @@ When you run `/e2e-init`, the following structure is created:
 
 ### Android
 
-When you run `/e2e-init android`, the following structure is created:
+`/e2e-init android` 실행 시 생성되는 구조:
 
 ```
 app/src/androidTest/java/{package}/
@@ -158,36 +158,36 @@ app/src/androidTest/java/{package}/
 │   ├── TestDataManager.kt
 │   └── ScreenshotHelper.kt
 ├── pages/
-│   ├── BasePage.kt            # Espresso base
-│   ├── ComposeBasePage.kt     # Compose base (if detected)
+│   ├── BasePage.kt            # Espresso 베이스
+│   ├── ComposeBasePage.kt     # Compose 베이스 (감지 시)
 │   └── {ScreenName}Page.kt
 ├── flows/
 │   └── {Feature}Flow.kt
 └── tests/
-    ├── BaseUITest.kt          # Espresso base test
-    ├── ComposeBaseUITest.kt   # Compose base test (if detected)
+    ├── BaseUITest.kt          # Espresso 베이스 테스트
+    ├── ComposeBaseUITest.kt   # Compose 베이스 테스트 (감지 시)
     └── {Feature}Tests.kt
 ```
 
-## Platform Support
+## 플랫폼 지원
 
 ### iOS
-- XCUITest framework
+- XCUITest 프레임워크
 - Swift 5.9+
 - Xcode 15.0+
 - iOS 17.0+
 
 ### Android
-- Espresso (View-based UI)
+- Espresso (View 기반 UI)
 - Jetpack Compose Testing
-- UI Automator (System interactions)
+- UI Automator (시스템 상호작용)
 - Kotlin
 - Android Studio
 - API 24+
 
-## Element Identifier Convention
+## 요소 식별자 명명 규칙
 
-For reliable element identification across platforms, use this naming convention:
+플랫폼 간 안정적인 요소 식별을 위해 다음 명명 규칙을 사용합니다:
 
 ```
 {screenName}_{elementType}_{elementName}
@@ -199,7 +199,7 @@ TextField("Email", text: $email)
     .accessibilityIdentifier("login_input_email")
 ```
 
-### Android (testTag for Compose)
+### Android (Compose용 testTag)
 ```kotlin
 TextField(
     modifier = Modifier.testTag("login_input_email"),
@@ -208,39 +208,39 @@ TextField(
 )
 ```
 
-### Android (resource ID for Views)
+### Android (View용 resource ID)
 ```xml
 <EditText
     android:id="@+id/login_input_email"
     ... />
 ```
 
-### Common Element Types
-- `input` - Text fields
-- `button` - Buttons
-- `text` - Labels/Text
-- `toggle` - Switches, Checkboxes
-- `list` - Lists, Collections
-- `cell` - List items
+### 공통 요소 타입
+- `input` - 텍스트 필드
+- `button` - 버튼
+- `text` - 레이블/텍스트
+- `toggle` - 스위치, 체크박스
+- `list` - 리스트, 컬렉션
+- `cell` - 리스트 아이템
 
-## CI/CD Integration
+## CI/CD 통합
 
-The `/e2e-ci` command generates:
+`/e2e-ci` 명령어로 생성되는 항목:
 
-- **GitHub Actions workflow** (`.github/workflows/ui_tests.yml`)
-- **Fastlane configuration** (`fastlane/Fastfile`)
-- **Test report generator** (optional)
-- **Slack notification setup** (optional)
+- **GitHub Actions 워크플로우** (`.github/workflows/ui_tests.yml`)
+- **Fastlane 설정** (`fastlane/Fastfile`)
+- **테스트 리포트 생성기** (선택)
+- **Slack 알림 설정** (선택)
 
-## Contributing
+## 기여하기
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+기여를 환영합니다! PR 제출 전 기여 가이드라인을 읽어주세요.
 
-## License
+## 라이선스
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License - 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.
 
-## Acknowledgments
+## 감사의 말
 
-- Inspired by E2E testing patterns from production mobile applications
-- Built with Claude Code Extension framework
+- 프로덕션 모바일 애플리케이션의 E2E 테스트 패턴에서 영감을 받았습니다
+- Claude Code Extension 프레임워크로 제작되었습니다

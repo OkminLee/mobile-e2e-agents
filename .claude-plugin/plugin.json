@@ -3,10 +3,10 @@
   "version": "0.2.0",
   "description": "Cross-platform mobile E2E testing toolkit for iOS (XCUITest) and Android (Espresso/Compose)",
   "author": {
-    "name": "mobile-e2e-agents contributors",
-    "url": "https://github.com/user/mobile-e2e-agents"
+    "name": "OkminLee",
+    "url": "https://github.com/OkminLee"
   },
-  "repository": "https://github.com/user/mobile-e2e-agents",
+  "repository": "https://github.com/OkminLee/mobile-e2e-agents",
   "license": "MIT",
   "keywords": [
     "e2e",

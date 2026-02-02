@@ -1,0 +1,210 @@
+package {{PACKAGE}}
+
+import android.content.Context
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.After
+import org.junit.Before
+import org.junit.Rule
+import org.junit.runner.RunWith
+import {{PACKAGE}}.support.TestDataManager
+
+/**
+ * Base class for Compose UI tests
+ *
+ * Features:
+ * - ComposeTestRule for Compose testing
+ * - Automatic state reset
+ * - Test clock control for animations
+ * - Idle waiting utilities
+ *
+ * Configuration:
+ * - Override `shouldResetState` to control state reset
+ * - Override `setUp()` for custom initialization
+ *
+ * Usage:
+ * ```kotlin
+ * class LoginTests : ComposeBaseUITest() {
+ *     private val loginPage by lazy { LoginPage(composeRule) }
+ *
+ *     @Test
+ *     fun test_login_succeeds() {
+ *         assertTrue(loginPage.verifyScreenDisplayed())
+ *         loginPage.login("user", "pass")
+ *         assertTrue(HomePage(composeRule).verifyScreenDisplayed())
+ *     }
+ * }
+ * ```
+ */
+@RunWith(AndroidJUnit4::class)
+abstract class ComposeBaseUITest {
+
+    // MARK: - Configuration
+
+    /**
+     * Whether to reset app state before each test
+     */
+    open val shouldResetState: Boolean = true
+
+    /**
+     * Whether to auto-advance the test clock
+     * Set to false when testing animations manually
+     */
+    open val autoAdvanceClock: Boolean = true
+
+    // MARK: - Rules
+
+    @get:Rule
+    val composeRule = createAndroidComposeRule<{{MAIN_ACTIVITY}}>()
+
+    // MARK: - Context
+
+    /**
+     * Application context
+     */
+    protected val context: Context
+        get() = composeRule.activity.applicationContext
+
+    // MARK: - Test Data
+
+    /**
+     * Test data manager for setting up/cleaning test data
+     */
+    protected val testData: TestDataManager by lazy {
+        TestDataManager(context)
+    }
+
+    // MARK: - Lifecycle
+
+    @Before
+    open fun setUp() {
+        if (shouldResetState) {
+            resetAppState()
+        }
+
+        // Configure test clock
+        if (!autoAdvanceClock) {
+            composeRule.mainClock.autoAdvance = false
+        }
+
+        // Wait for initial composition to complete
+        composeRule.waitForIdle()
+
+        onSetUp()
+    }
+
+    @After
+    open fun tearDown() {
+        onTearDown()
+    }
+
+    /**
+     * Override for custom setup logic
+     */
+    protected open fun onSetUp() {
+        // Override in subclass
+    }
+
+    /**
+     * Override for custom teardown logic
+     */
+    protected open fun onTearDown() {
+        // Override in subclass
+    }
+
+    // MARK: - State Management
+
+    /**
+     * Reset app state to clean slate
+     */
+    private fun resetAppState() {
+        // Clear SharedPreferences
+        clearSharedPreferences()
+
+        // Clear test data
+        testData.clearAll()
+    }
+
+    /**
+     * Clear all SharedPreferences
+     */
+    private fun clearSharedPreferences() {
+        val prefsDir = context.filesDir.parentFile?.resolve("shared_prefs")
+        prefsDir?.listFiles()?.forEach { file ->
+            val prefName = file.nameWithoutExtension
+            context.getSharedPreferences(prefName, Context.MODE_PRIVATE)
+                .edit()
+                .clear()
+                .apply()
+        }
+    }
+
+    // MARK: - Idle & Clock Control
+
+    /**
+     * Wait for Compose to be idle
+     */
+    protected fun waitForIdle() {
+        composeRule.waitForIdle()
+    }
+
+    /**
+     * Advance test clock by specified time
+     * Useful for testing animations
+     */
+    protected fun advanceTimeBy(milliseconds: Long) {
+        composeRule.mainClock.advanceTimeBy(milliseconds)
+    }
+
+    /**
+     * Advance clock until all pending frames are processed
+     */
+    protected fun advanceUntilIdle() {
+        composeRule.mainClock.advanceTimeUntilIdle()
+    }
+
+    /**
+     * Wait with custom timeout and condition
+     */
+    protected fun waitUntil(
+        timeoutMs: Long = 5000,
+        condition: () -> Boolean
+    ) {
+        composeRule.waitUntil(timeoutMs, condition)
+    }
+
+    // MARK: - Screenshots
+
+    /**
+     * Capture screenshot of current state
+     * Note: Requires additional setup for Compose screenshots
+     */
+    protected fun captureScreenshot(name: String) {
+        // Implementation depends on your screenshot library
+        // Options: Shot, Paparazzi, or custom implementation
+        composeRule.onRoot().printToLog("SCREENSHOT_$name")
+    }
+
+    // MARK: - Activity Access
+
+    /**
+     * Run action on the activity
+     */
+    protected fun runOnActivity(action: ({{MAIN_ACTIVITY}}) -> Unit) {
+        composeRule.activityRule.scenario.onActivity(action)
+    }
+
+    /**
+     * Get string resource by ID
+     */
+    protected fun getString(resId: Int): String {
+        return context.getString(resId)
+    }
+
+    /**
+     * Get string resource with format args
+     */
+    protected fun getString(resId: Int, vararg formatArgs: Any): String {
+        return context.getString(resId, *formatArgs)
+    }
+}

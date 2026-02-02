@@ -1,0 +1,114 @@
+package {{PACKAGE}}.pages
+
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.ComposeTestRule
+
+/**
+ * Page Object for {{SCREEN_NAME}} screen (Compose)
+ *
+ * This page represents the {{SCREEN_NAME}} Compose screen and provides:
+ * - Semantics node accessors via test tags
+ * - Action methods with automatic waiting
+ * - Verification methods
+ *
+ * Test Tags (set in Compose code via Modifier.testTag()):
+ * {{TEST_TAGS}}
+ *
+ * Usage:
+ * ```kotlin
+ * val {{SCREEN_NAME_LOWER}}Page = {{SCREEN_NAME}}Page(composeRule)
+ * {{SCREEN_NAME_LOWER}}Page
+ *     .enterUsername("test")
+ *     .enterPassword("pass")
+ *     .tapSubmit()
+ * ```
+ */
+class {{SCREEN_NAME}}Page(
+    composeRule: ComposeTestRule
+) : ComposeBasePage(composeRule) {
+
+    // MARK: - Screen Identifier
+
+    override val screenTestTag: String = "{{SCREEN_TAG}}"
+
+    // MARK: - Elements
+
+    {{COMPOSE_ELEMENTS}}
+
+    // MARK: - Verification
+
+    /**
+     * Verify {{SCREEN_NAME}} screen is displayed
+     */
+    fun verify{{SCREEN_NAME}}Displayed(): Boolean {
+        return verifyScreenDisplayed()
+    }
+
+    {{VERIFICATION_METHODS}}
+
+    // MARK: - Actions
+
+    {{COMPOSE_ACTIONS}}
+
+    // MARK: - Compound Actions
+
+    {{COMPOUND_ACTIONS}}
+}
+
+/*
+ * Element Template (Test Tags):
+ *
+ * private val emailInput
+ *     get() = nodeByTag("{{screen_name}}_input_email")
+ *
+ * private val passwordInput
+ *     get() = nodeByTag("{{screen_name}}_input_password")
+ *
+ * private val submitButton
+ *     get() = nodeByTag("{{screen_name}}_button_submit")
+ *
+ * private val errorText
+ *     get() = nodeByTag("{{screen_name}}_text_error")
+ *
+ * Action Template:
+ *
+ * fun enterEmail(text: String) = apply {
+ *     emailInput.safeClearAndTypeText(text)
+ * }
+ *
+ * fun tapSubmit() = apply {
+ *     submitButton.safeTap()
+ * }
+ *
+ * Navigation Template:
+ *
+ * fun tapSubmit(): HomePage {
+ *     submitButton.safeTap()
+ *     return HomePage(composeRule)
+ * }
+ *
+ * Verification Template:
+ *
+ * fun verifyErrorDisplayed(message: String): Boolean {
+ *     return try {
+ *         errorText.assertTextEquals(message)
+ *         true
+ *     } catch (e: AssertionError) {
+ *         false
+ *     }
+ * }
+ *
+ * List Action Template:
+ *
+ * fun tapItemAt(index: Int) = apply {
+ *     scrollToNodeWithTag("{{screen_name}}_list", "{{screen_name}}_item_$index")
+ *     nodeByTag("{{screen_name}}_item_$index").safeTap()
+ * }
+ *
+ * fun getItemCount(): Int {
+ *     return composeRule
+ *         .onAllNodesWithTag("{{screen_name}}_item", substring = true)
+ *         .fetchSemanticsNodes()
+ *         .size
+ * }
+ */

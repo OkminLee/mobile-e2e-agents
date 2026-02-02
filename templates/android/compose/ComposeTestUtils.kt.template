@@ -1,0 +1,346 @@
+package {{PACKAGE}}.support
+
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.ComposeTestRule
+
+/**
+ * Utility functions for Compose testing
+ *
+ * Provides extension functions for:
+ * - Enhanced waiting utilities
+ * - List/LazyColumn helpers
+ * - Input helpers
+ * - Gesture helpers
+ * - Debug utilities
+ *
+ * Usage:
+ * ```kotlin
+ * // In test
+ * composeRule.waitUntilDisplayed("login_screen")
+ * composeRule.waitForLoadingToComplete()
+ *
+ * // Node extensions
+ * node.clearAndType("text")
+ * node.swipeToRefresh()
+ * ```
+ */
+object ComposeTestUtils {
+
+    // ============================================================
+    // MARK: - Enhanced Waiting
+    // ============================================================
+
+    /**
+     * Wait until a node with the given tag exists and is displayed
+     */
+    fun ComposeTestRule.waitUntilDisplayed(
+        tag: String,
+        timeoutMs: Long = 5000
+    ) {
+        this.waitUntil(timeoutMs) {
+            this.onAllNodesWithTag(tag)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
+
+    /**
+     * Wait until a node with the given text exists
+     */
+    fun ComposeTestRule.waitUntilTextDisplayed(
+        text: String,
+        timeoutMs: Long = 5000
+    ) {
+        this.waitUntil(timeoutMs) {
+            this.onAllNodesWithText(text)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
+
+    /**
+     * Wait until node disappears
+     */
+    fun ComposeTestRule.waitUntilGone(
+        tag: String,
+        timeoutMs: Long = 5000
+    ) {
+        this.waitUntil(timeoutMs) {
+            this.onAllNodesWithTag(tag)
+                .fetchSemanticsNodes()
+                .isEmpty()
+        }
+    }
+
+    /**
+     * Wait until loading indicator disappears
+     */
+    fun ComposeTestRule.waitForLoadingToComplete(
+        loadingTag: String = "loading_indicator",
+        timeoutMs: Long = 10000
+    ) {
+        // First wait for loading to appear (might already be gone)
+        try {
+            this.waitUntil(1000) {
+                this.onAllNodesWithTag(loadingTag)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
+        } catch (e: Exception) {
+            // Loading might have completed before we started waiting
+            return
+        }
+
+        // Then wait for it to disappear
+        this.waitUntil(timeoutMs) {
+            this.onAllNodesWithTag(loadingTag)
+                .fetchSemanticsNodes()
+                .isEmpty()
+        }
+    }
+
+    /**
+     * Wait for screen transition to complete
+     */
+    fun ComposeTestRule.waitForScreenTransition(
+        targetScreenTag: String,
+        timeoutMs: Long = 5000
+    ) {
+        this.waitUntilDisplayed(targetScreenTag, timeoutMs)
+        this.waitForIdle()
+    }
+
+    // ============================================================
+    // MARK: - List Helpers
+    // ============================================================
+
+    /**
+     * Get count of items in a lazy list by tag prefix
+     */
+    fun ComposeTestRule.getListItemCount(
+        itemTagPrefix: String
+    ): Int {
+        return this.onAllNodes(hasTestTag(itemTagPrefix, substring = true))
+            .fetchSemanticsNodes()
+            .size
+    }
+
+    /**
+     * Scroll to item at index in lazy list
+     */
+    fun ComposeTestRule.scrollToListItem(
+        listTag: String,
+        itemTag: String
+    ): SemanticsNodeInteraction {
+        this.onNodeWithTag(listTag)
+            .performScrollToNode(hasTestTag(itemTag))
+        return this.onNodeWithTag(itemTag)
+    }
+
+    /**
+     * Scroll to item with text in lazy list
+     */
+    fun ComposeTestRule.scrollToListItemWithText(
+        listTag: String,
+        text: String
+    ): SemanticsNodeInteraction {
+        this.onNodeWithTag(listTag)
+            .performScrollToNode(hasText(text))
+        return this.onNodeWithText(text)
+    }
+
+    /**
+     * Scroll lazy list to beginning
+     */
+    fun ComposeTestRule.scrollListToTop(
+        listTag: String
+    ) {
+        this.onNodeWithTag(listTag)
+            .performScrollToIndex(0)
+    }
+
+    /**
+     * Check if list is empty
+     */
+    fun ComposeTestRule.isListEmpty(
+        emptyStateTag: String
+    ): Boolean {
+        return try {
+            this.onNodeWithTag(emptyStateTag)
+                .assertExists()
+            true
+        } catch (e: AssertionError) {
+            false
+        }
+    }
+
+    // ============================================================
+    // MARK: - Input Helpers
+    // ============================================================
+
+    /**
+     * Clear and type text with keyboard dismissal
+     */
+    fun SemanticsNodeInteraction.clearAndType(text: String): SemanticsNodeInteraction {
+        return this
+            .performTextClearance()
+            .performTextInput(text)
+    }
+
+    /**
+     * Type text and press IME action (e.g., Search, Done)
+     */
+    fun SemanticsNodeInteraction.typeAndSubmit(text: String): SemanticsNodeInteraction {
+        return this
+            .performTextInput(text)
+            .performImeAction()
+    }
+
+    /**
+     * Clear text and submit empty (for testing validation)
+     */
+    fun SemanticsNodeInteraction.clearAndSubmit(): SemanticsNodeInteraction {
+        return this
+            .performTextClearance()
+            .performImeAction()
+    }
+
+    // ============================================================
+    // MARK: - Gesture Helpers
+    // ============================================================
+
+    /**
+     * Perform swipe to refresh gesture
+     */
+    fun SemanticsNodeInteraction.swipeToRefresh(): SemanticsNodeInteraction {
+        return this.performTouchInput {
+            swipeDown(startY = centerY, endY = bottom)
+        }
+    }
+
+    /**
+     * Perform swipe to delete gesture (left swipe)
+     */
+    fun SemanticsNodeInteraction.swipeToDelete(): SemanticsNodeInteraction {
+        return this.performTouchInput {
+            swipeLeft()
+        }
+    }
+
+    /**
+     * Perform swipe to reveal actions (right swipe)
+     */
+    fun SemanticsNodeInteraction.swipeToReveal(): SemanticsNodeInteraction {
+        return this.performTouchInput {
+            swipeRight()
+        }
+    }
+
+    /**
+     * Perform pinch to zoom in
+     */
+    fun SemanticsNodeInteraction.pinchZoomIn(): SemanticsNodeInteraction {
+        return this.performTouchInput {
+            pinch(
+                start0 = center,
+                end0 = topCenter,
+                start1 = center,
+                end1 = bottomCenter
+            )
+        }
+    }
+
+    /**
+     * Perform pinch to zoom out
+     */
+    fun SemanticsNodeInteraction.pinchZoomOut(): SemanticsNodeInteraction {
+        return this.performTouchInput {
+            pinch(
+                start0 = topCenter,
+                end0 = center,
+                start1 = bottomCenter,
+                end1 = center
+            )
+        }
+    }
+
+    // ============================================================
+    // MARK: - Assertion Helpers
+    // ============================================================
+
+    /**
+     * Assert node exists and return it
+     */
+    fun SemanticsNodeInteraction.assertExistsAndReturn(): SemanticsNodeInteraction {
+        this.assertExists()
+        return this
+    }
+
+    /**
+     * Assert node count equals expected
+     */
+    fun SemanticsNodeInteractionCollection.assertCount(expected: Int): SemanticsNodeInteractionCollection {
+        assert(this.fetchSemanticsNodes().size == expected) {
+            "Expected $expected nodes but found ${this.fetchSemanticsNodes().size}"
+        }
+        return this
+    }
+
+    /**
+     * Assert node count is at least expected
+     */
+    fun SemanticsNodeInteractionCollection.assertCountAtLeast(expected: Int): SemanticsNodeInteractionCollection {
+        assert(this.fetchSemanticsNodes().size >= expected) {
+            "Expected at least $expected nodes but found ${this.fetchSemanticsNodes().size}"
+        }
+        return this
+    }
+
+    // ============================================================
+    // MARK: - Debug Helpers
+    // ============================================================
+
+    /**
+     * Print entire semantics tree for debugging
+     */
+    fun ComposeTestRule.printFullTree() {
+        this.onRoot().printToLog("FULL_TREE")
+    }
+
+    /**
+     * Print semantics tree starting from specific node
+     */
+    fun ComposeTestRule.printTreeFrom(tag: String) {
+        this.onNodeWithTag(tag).printToLog("TREE_FROM_$tag")
+    }
+
+    /**
+     * Print all nodes matching tag pattern
+     */
+    fun ComposeTestRule.printAllMatchingNodes(tagPrefix: String) {
+        val nodes = this.onAllNodes(hasTestTag(tagPrefix, substring = true))
+            .fetchSemanticsNodes()
+        println("Found ${nodes.size} nodes matching '$tagPrefix':")
+        nodes.forEachIndexed { index, node ->
+            println("  [$index] ${node.config}")
+        }
+    }
+
+    /**
+     * Check if node exists (non-throwing)
+     */
+    fun ComposeTestRule.nodeExists(tag: String): Boolean {
+        return this.onAllNodesWithTag(tag)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+    }
+
+    /**
+     * Check if text exists (non-throwing)
+     */
+    fun ComposeTestRule.textExists(text: String): Boolean {
+        return this.onAllNodesWithText(text)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+    }
+}

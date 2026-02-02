@@ -1,0 +1,353 @@
+package {{PACKAGE}}.pages
+
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.ComposeTestRule
+
+/**
+ * Base class for Compose-based Page Objects
+ *
+ * Key Differences from Espresso BasePage:
+ * - Uses ComposeTestRule instead of ActivityScenarioRule
+ * - Uses Semantics matchers instead of View matchers
+ * - Node-based interactions instead of ViewInteraction
+ *
+ * Migration Guide from Espresso:
+ * | Espresso                  | Compose                      |
+ * |---------------------------|------------------------------|
+ * | onView(withId(...))       | onNodeWithTag(...)           |
+ * | ViewInteraction           | SemanticsNodeInteraction     |
+ * | withText(...)             | hasText(...)                 |
+ * | withContentDescription    | hasContentDescription        |
+ * | perform(click())          | performClick()               |
+ *
+ * Usage:
+ * ```kotlin
+ * class LoginPage(composeRule: ComposeTestRule) : ComposeBasePage(composeRule) {
+ *     override val screenTestTag = "login_screen"
+ *
+ *     fun tapSubmit() = apply {
+ *         submitButton.safeTap()
+ *     }
+ * }
+ * ```
+ */
+abstract class ComposeBasePage(
+    protected val composeRule: ComposeTestRule
+) {
+
+    // MARK: - Abstract Properties
+
+    /**
+     * Test tag that uniquely identifies this screen.
+     * Set via Modifier.testTag("screen_tag") in Compose code.
+     */
+    abstract val screenTestTag: String
+
+    // MARK: - Verification
+
+    /**
+     * Verify screen is displayed within timeout
+     * @param timeoutMs Maximum time to wait for screen
+     * @return true if screen is displayed, false otherwise
+     */
+    fun verifyScreenDisplayed(timeoutMs: Long = 5000): Boolean {
+        return try {
+            composeRule.waitUntil(timeoutMs) {
+                composeRule
+                    .onAllNodesWithTag(screenTestTag)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // MARK: - Node Finders
+
+    /**
+     * Find node by test tag
+     */
+    protected fun nodeByTag(tag: String): SemanticsNodeInteraction {
+        return composeRule.onNodeWithTag(tag)
+    }
+
+    /**
+     * Find node by test tag using unmerged tree
+     * Use when element is inside merged semantics
+     */
+    protected fun nodeByTagUnmerged(tag: String): SemanticsNodeInteraction {
+        return composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+    }
+
+    /**
+     * Find node by exact text
+     */
+    protected fun nodeByText(text: String): SemanticsNodeInteraction {
+        return composeRule.onNodeWithText(text)
+    }
+
+    /**
+     * Find node by text substring
+     */
+    protected fun nodeByTextContains(text: String): SemanticsNodeInteraction {
+        return composeRule.onNodeWithText(text, substring = true)
+    }
+
+    /**
+     * Find node by content description
+     */
+    protected fun nodeByContentDescription(desc: String): SemanticsNodeInteraction {
+        return composeRule.onNodeWithContentDescription(desc)
+    }
+
+    /**
+     * Find all nodes with tag (for lists)
+     */
+    protected fun allNodesByTag(tag: String): SemanticsNodeInteractionCollection {
+        return composeRule.onAllNodesWithTag(tag)
+    }
+
+    /**
+     * Find all nodes with text
+     */
+    protected fun allNodesByText(text: String): SemanticsNodeInteractionCollection {
+        return composeRule.onAllNodesWithText(text)
+    }
+
+    /**
+     * Find node matching custom matcher
+     */
+    protected fun nodeByMatcher(matcher: SemanticsMatcher): SemanticsNodeInteraction {
+        return composeRule.onNode(matcher)
+    }
+
+    // MARK: - Safe Actions
+
+    /**
+     * Tap element with existence check
+     */
+    protected fun SemanticsNodeInteraction.safeTap(): SemanticsNodeInteraction {
+        this.assertExists()
+        return this.performClick()
+    }
+
+    /**
+     * Long press element with existence check
+     */
+    protected fun SemanticsNodeInteraction.safeLongPress(): SemanticsNodeInteraction {
+        this.assertExists()
+        return this.performTouchInput { longClick() }
+    }
+
+    /**
+     * Double tap element with existence check
+     */
+    protected fun SemanticsNodeInteraction.safeDoubleTap(): SemanticsNodeInteraction {
+        this.assertExists()
+        return this.performTouchInput { doubleClick() }
+    }
+
+    /**
+     * Clear text and type new text
+     */
+    protected fun SemanticsNodeInteraction.safeClearAndTypeText(text: String): SemanticsNodeInteraction {
+        this.assertExists()
+        return this.performTextClearance().performTextInput(text)
+    }
+
+    /**
+     * Type text without clearing (append)
+     */
+    protected fun SemanticsNodeInteraction.safeTypeText(text: String): SemanticsNodeInteraction {
+        this.assertExists()
+        return this.performTextInput(text)
+    }
+
+    /**
+     * Replace text
+     */
+    protected fun SemanticsNodeInteraction.safeReplaceText(text: String): SemanticsNodeInteraction {
+        this.assertExists()
+        return this.performTextReplacement(text)
+    }
+
+    /**
+     * Clear text field
+     */
+    protected fun SemanticsNodeInteraction.safeClearText(): SemanticsNodeInteraction {
+        this.assertExists()
+        return this.performTextClearance()
+    }
+
+    // MARK: - Waiting
+
+    /**
+     * Wait for node with tag to exist
+     */
+    protected fun waitForNode(
+        tag: String,
+        timeoutMs: Long = 5000
+    ) {
+        composeRule.waitUntil(timeoutMs) {
+            composeRule
+                .onAllNodesWithTag(tag)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
+
+    /**
+     * Wait for node to disappear
+     */
+    protected fun waitForNodeToDisappear(
+        tag: String,
+        timeoutMs: Long = 5000
+    ) {
+        composeRule.waitUntil(timeoutMs) {
+            composeRule
+                .onAllNodesWithTag(tag)
+                .fetchSemanticsNodes()
+                .isEmpty()
+        }
+    }
+
+    /**
+     * Wait for text to appear
+     */
+    protected fun waitForText(
+        text: String,
+        timeoutMs: Long = 5000
+    ) {
+        composeRule.waitUntil(timeoutMs) {
+            composeRule
+                .onAllNodesWithText(text)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+    }
+
+    /**
+     * Wait with custom condition
+     */
+    protected fun waitUntil(
+        timeoutMs: Long = 5000,
+        condition: () -> Boolean
+    ) {
+        composeRule.waitUntil(timeoutMs, condition)
+    }
+
+    // MARK: - Scrolling
+
+    /**
+     * Scroll node into view
+     */
+    protected fun SemanticsNodeInteraction.scrollIntoView(): SemanticsNodeInteraction {
+        return this.performScrollTo()
+    }
+
+    /**
+     * Scroll to node with tag in scrollable container
+     */
+    protected fun scrollToNodeWithTag(
+        scrollableTag: String,
+        targetTag: String
+    ): SemanticsNodeInteraction {
+        composeRule
+            .onNodeWithTag(scrollableTag)
+            .performScrollToNode(hasTestTag(targetTag))
+        return composeRule.onNodeWithTag(targetTag)
+    }
+
+    /**
+     * Scroll to node with text in scrollable container
+     */
+    protected fun scrollToNodeWithText(
+        scrollableTag: String,
+        text: String
+    ): SemanticsNodeInteraction {
+        composeRule
+            .onNodeWithTag(scrollableTag)
+            .performScrollToNode(hasText(text))
+        return composeRule.onNodeWithText(text)
+    }
+
+    // MARK: - Assertions
+
+    /**
+     * Assert node is displayed
+     */
+    protected fun SemanticsNodeInteraction.assertDisplayed(): SemanticsNodeInteraction {
+        return this.assertIsDisplayed()
+    }
+
+    /**
+     * Assert node is enabled
+     */
+    protected fun SemanticsNodeInteraction.assertEnabled(): SemanticsNodeInteraction {
+        return this.assertIsEnabled()
+    }
+
+    /**
+     * Assert node is disabled
+     */
+    protected fun SemanticsNodeInteraction.assertDisabled(): SemanticsNodeInteraction {
+        return this.assertIsNotEnabled()
+    }
+
+    /**
+     * Assert text equals expected
+     */
+    protected fun SemanticsNodeInteraction.assertTextEquals(expected: String): SemanticsNodeInteraction {
+        return this.assert(hasText(expected))
+    }
+
+    /**
+     * Assert text contains expected
+     */
+    protected fun SemanticsNodeInteraction.assertTextContains(expected: String): SemanticsNodeInteraction {
+        return this.assert(hasText(expected, substring = true))
+    }
+
+    /**
+     * Assert node is toggled on (checkbox, switch)
+     */
+    protected fun SemanticsNodeInteraction.assertToggleOn(): SemanticsNodeInteraction {
+        return this.assertIsOn()
+    }
+
+    /**
+     * Assert node is toggled off
+     */
+    protected fun SemanticsNodeInteraction.assertToggleOff(): SemanticsNodeInteraction {
+        return this.assertIsOff()
+    }
+
+    /**
+     * Assert node is selected
+     */
+    protected fun SemanticsNodeInteraction.assertSelected(): SemanticsNodeInteraction {
+        return this.assertIsSelected()
+    }
+
+    /**
+     * Assert node is not selected
+     */
+    protected fun SemanticsNodeInteraction.assertNotSelected(): SemanticsNodeInteraction {
+        return this.assertIsNotSelected()
+    }
+
+    // MARK: - Debug Helpers
+
+    /**
+     * Print semantics tree for debugging
+     */
+    protected fun printSemantics(tag: String? = null) {
+        if (tag != null) {
+            composeRule.onNodeWithTag(tag).printToLog("SEMANTICS")
+        } else {
+            composeRule.onRoot().printToLog("SEMANTICS")
+        }
+    }
+}

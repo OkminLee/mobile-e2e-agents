@@ -1,0 +1,115 @@
+package {{PACKAGE}}.tests
+
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
+import {{PACKAGE}}.ComposeBaseUITest
+import {{PACKAGE}}.pages.*
+
+/**
+ * {{TEST_CLASS_NAME}} Tests (Compose)
+ *
+ * Test cases for {{FEATURE_NAME}} Compose screens.
+ *
+ * Test Naming Convention:
+ * test_{action}_{outcome}[_{condition}]
+ *
+ * Examples:
+ * - test_login_succeeds_withValidCredentials
+ * - test_login_fails_withInvalidPassword
+ * - test_submit_isDisabled_whenFieldsEmpty
+ */
+class {{TEST_CLASS_NAME}}Tests : ComposeBaseUITest() {
+
+    // MARK: - Properties
+
+    {{PAGE_PROPERTIES}}
+
+    // MARK: - Configuration
+
+    override val shouldResetState: Boolean = true
+    override val autoAdvanceClock: Boolean = true
+
+    // MARK: - Setup
+
+    @Before
+    override fun setUp() {
+        super.setUp()
+        // Additional setup for this test class
+        {{SETUP_CODE}}
+    }
+
+    // MARK: - Test Data
+
+    object TestData {
+        {{TEST_DATA}}
+    }
+
+    // MARK: - Tests
+
+    {{TEST_METHODS}}
+}
+
+/*
+ * Test Template:
+ *
+ * @Test
+ * fun test_login_succeeds_withValidCredentials() {
+ *     // Given
+ *     assertTrue(loginPage.verifyScreenDisplayed())
+ *     captureScreenshot("01_login_screen")
+ *
+ *     // When
+ *     val homePage = loginPage.login(
+ *         email = TestData.validEmail,
+ *         password = TestData.validPassword
+ *     )
+ *
+ *     // Then
+ *     assertTrue(homePage.verifyScreenDisplayed())
+ *     captureScreenshot("02_home_screen")
+ * }
+ *
+ * @Test
+ * fun test_login_fails_withInvalidPassword() {
+ *     // Given
+ *     assertTrue(loginPage.verifyScreenDisplayed())
+ *
+ *     // When
+ *     loginPage
+ *         .enterEmail(TestData.validEmail)
+ *         .enterPassword(TestData.invalidPassword)
+ *         .tapSubmit()
+ *
+ *     // Then
+ *     assertTrue(loginPage.verifyErrorDisplayed("Invalid credentials"))
+ * }
+ *
+ * @Test
+ * fun test_animation_completes() {
+ *     // Given - disable auto advance for manual animation control
+ *     composeRule.mainClock.autoAdvance = false
+ *
+ *     // When
+ *     loginPage.tapSubmit()
+ *
+ *     // Advance time to complete animation
+ *     advanceTimeBy(500)
+ *
+ *     // Then
+ *     assertTrue(homePage.verifyScreenDisplayed())
+ * }
+ *
+ * Page Property Template:
+ *
+ * private val loginPage by lazy { LoginPage(composeRule) }
+ * private val homePage by lazy { HomePage(composeRule) }
+ *
+ * Test Data Template:
+ *
+ * object TestData {
+ *     const val validEmail = "test@example.com"
+ *     const val validPassword = "password123"
+ *     const val invalidPassword = "wrong"
+ * }
+ */

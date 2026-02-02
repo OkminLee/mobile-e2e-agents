@@ -20,6 +20,5 @@
     "automation",
     "mobile"
   ],
-  "commands": "./.claude/commands/",
-  "agents": "./.claude/agents/"
+  "commands": "./.claude/commands/"
 }

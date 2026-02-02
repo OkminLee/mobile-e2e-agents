@@ -44,7 +44,7 @@ LoginPage(app).tapLoginButton()
 
 **1단계: Marketplace 추가**
 ```bash
-/plugin marketplace add https://github.com/user/mobile-e2e-agents.git
+/plugin marketplace add https://github.com/OkminLee/mobile-e2e-agents.git
 ```
 
 **2단계: 플러그인 설치**
@@ -66,7 +66,7 @@ LoginPage(app).tapLoginButton()
 
 ```bash
 # 저장소 클론
-git clone https://github.com/user/mobile-e2e-agents.git
+git clone https://github.com/OkminLee/mobile-e2e-agents.git
 
 # 플러그인 디렉토리 지정하여 Claude Code 실행
 claude --plugin-dir ./mobile-e2e-agents
@@ -76,7 +76,7 @@ claude --plugin-dir ./mobile-e2e-agents
 
 1. 저장소 클론:
 ```bash
-git clone https://github.com/user/mobile-e2e-agents.git
+git clone https://github.com/OkminLee/mobile-e2e-agents.git
 ```
 
 2. 프로젝트의 `.claude/` 디렉토리에 명령어 복사:

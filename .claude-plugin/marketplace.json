@@ -1,0 +1,11 @@
+{
+  "name": "mobile-e2e-marketplace",
+  "description": "Mobile E2E testing plugins for Claude Code",
+  "plugins": [
+    {
+      "name": "mobile-e2e-agents",
+      "source": "./",
+      "description": "Cross-platform mobile E2E testing toolkit"
+    }
+  ]
+}

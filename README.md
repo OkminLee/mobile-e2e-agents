@@ -14,20 +14,49 @@ iOS 및 Android 모바일 앱의 E2E 테스트 인프라 설정, Page Object Mod
 
 ## 설치
 
-### Claude Code 확장으로 설치
+### 방법 1: Claude Code 플러그인으로 설치 (권장)
+
+**1단계: Marketplace 추가**
+```bash
+/plugin marketplace add https://github.com/user/mobile-e2e-agents.git
+```
+
+**2단계: 플러그인 설치**
+```bash
+# 현재 사용자에게 설치 (모든 프로젝트에서 사용)
+/plugin install mobile-e2e-agents@mobile-e2e-marketplace
+
+# 또는 프로젝트 전용으로 설치 (팀과 공유)
+/plugin install mobile-e2e-agents@mobile-e2e-marketplace --scope project
+```
+
+**3단계: 명령어 사용**
+```bash
+/mobile-e2e-agents:e2e-init
+/mobile-e2e-agents:e2e-pom LoginScreen
+```
+
+### 방법 2: 로컬 플러그인으로 테스트
+
+```bash
+# 저장소 클론
+git clone https://github.com/user/mobile-e2e-agents.git
+
+# 플러그인 디렉토리 지정하여 Claude Code 실행
+claude --plugin-dir ./mobile-e2e-agents
+```
+
+### 방법 3: 수동 설치
 
 1. 저장소 클론:
 ```bash
 git clone https://github.com/user/mobile-e2e-agents.git
 ```
 
-2. 프로젝트의 `.claude/` 디렉토리에 추가하거나 설정에서 참조:
-```json
-{
-  "extensions": [
-    "/path/to/mobile-e2e-agents"
-  ]
-}
+2. 프로젝트의 `.claude/` 디렉토리에 명령어 복사:
+```bash
+cp -r mobile-e2e-agents/.claude/commands/* your-project/.claude/commands/
+cp -r mobile-e2e-agents/.claude/agents/* your-project/.claude/agents/
 ```
 
 ## 빠른 시작
@@ -81,6 +110,10 @@ git clone https://github.com/user/mobile-e2e-agents.git
 
 ```
 mobile-e2e-agents/
+├── .claude-plugin/         # Claude Code 플러그인 메타데이터
+│   ├── plugin.json         # 플러그인 manifest
+│   └── marketplace.json    # Marketplace 설정
+│
 ├── .claude/
 │   ├── commands/           # 사용자 대상 슬래시 명령어
 │   │   ├── e2e-init.md

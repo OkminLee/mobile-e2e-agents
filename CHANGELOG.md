@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Claude Code 플러그인 지원
+  - `.claude-plugin/plugin.json` manifest 추가
+  - `.claude-plugin/marketplace.json` marketplace 설정
+  - `/plugin install` 명령어로 설치 가능
+- `.gitignore` 추가
+
+### Changed
+- README를 한국어로 변경
+- 설치 가이드에 플러그인 설치 방법 추가
+
 ## [0.2.0] - 2025-01-30
 
 ### Added (Android Support - Phase 2)

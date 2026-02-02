@@ -4,6 +4,32 @@
 
 iOS 및 Android 모바일 앱의 E2E 테스트 인프라 설정, Page Object Model 생성, CI/CD 통합을 자동화하는 종합 툴킷입니다.
 
+## E2E 테스트란?
+
+**E2E(End-to-End) 테스트**는 사용자 관점에서 앱의 전체 흐름을 검증하는 테스트입니다. 실제 사용자가 앱을 사용하는 것처럼 버튼을 누르고, 텍스트를 입력하고, 화면 전환을 확인합니다.
+
+| 구분 | 단위 테스트 | E2E 테스트 |
+|------|-------------|------------|
+| 검증 범위 | 함수/클래스 단위 | 전체 사용자 흐름 |
+| 실행 환경 | 메모리 내 | 시뮬레이터/실제 기기 |
+| 속도 | 빠름 (ms) | 느림 (초~분) |
+| 발견하는 버그 | 로직 오류 | UI 깨짐, 네비게이션 오류, 통합 문제 |
+
+### Page Object Model(POM)이란?
+
+**POM**은 화면별로 UI 요소와 동작을 캡슐화하는 디자인 패턴입니다. 테스트 코드의 중복을 줄이고 유지보수를 쉽게 만듭니다.
+
+```swift
+// POM 없이 - 요소 변경 시 모든 테스트 수정 필요
+app.buttons["login_button"].tap()
+app.buttons["login_button"].tap()  // 다른 테스트에서도 반복
+
+// POM 사용 - 한 곳만 수정하면 됨
+LoginPage(app).tapLoginButton()
+```
+
+> 자세한 내용: [docs/pom-patterns.md](docs/pom-patterns.md)
+
 ## 주요 기능
 
 - **E2E 스캐폴딩**: 단일 명령어로 E2E 테스트 구조 초기화
@@ -61,39 +87,137 @@ cp -r mobile-e2e-agents/.claude/agents/* your-project/.claude/agents/
 
 ## 빠른 시작
 
-### E2E 테스트 구조 초기화
+### 전제 조건
+
+| 플랫폼 | 요구사항 |
+|--------|----------|
+| **공통** | [Claude Code CLI](https://docs.anthropic.com/claude-code) 설치 완료 |
+| **iOS** | Xcode 15+, iOS 17+ 시뮬레이터 |
+| **Android** | Android Studio, API 24+ 에뮬레이터 |
+
+### 1단계: E2E 테스트 구조 초기화
 
 ```bash
 /e2e-init
 ```
 
-생성되는 항목:
-- `{Project}UITests/` 디렉토리
-- `BaseUITest.swift`
-- `UITestConfiguration.swift`
-- 지원 유틸리티
+```
+✓ 생성됨: MyAppUITests/Sources/Support/BaseUITest.swift
+✓ 생성됨: MyAppUITests/Sources/Support/UITestConfiguration.swift
+✓ 생성됨: MyAppUITests/Sources/Support/XCUIElement+Wait.swift
+✓ 생성됨: MyAppUITests/Sources/Pages/.gitkeep
+✓ 생성됨: MyAppUITests/Sources/Tests/.gitkeep
+```
 
-### Page Object 생성
+### 2단계: Page Object 생성
 
 ```bash
 /e2e-pom LoginScreen
 ```
 
-뷰 파일 분석과 함께:
+뷰 파일을 지정하면 자동으로 요소를 분석합니다:
 ```bash
 /e2e-pom LoginScreen --view-file Sources/Features/Login/LoginView.swift
 ```
 
-### 테스트 케이스 생성
+```
+✓ 분석됨: LoginView.swift (3개 요소 발견)
+✓ 생성됨: MyAppUITests/Sources/Pages/LoginScreenPage.swift
+```
+
+### 3단계: 테스트 케이스 생성
 
 ```bash
 /e2e-test "유효한 자격 증명으로 로그인할 수 있다"
 ```
 
-### CI 워크플로우 생성
+```
+✓ 생성됨: MyAppUITests/Sources/Tests/LoginTests.swift
+```
+
+### 4단계: CI 워크플로우 생성 (선택)
 
 ```bash
 /e2e-ci
+```
+
+```
+✓ 생성됨: .github/workflows/ui_tests.yml
+✓ 생성됨: fastlane/Fastfile
+```
+
+## 실전 예시: 로그인 테스트 만들기
+
+### 명령어 흐름
+
+```
+/e2e-init → /e2e-pom → /e2e-test → /e2e-ci
+    ↓           ↓           ↓          ↓
+  구조 생성   페이지 생성  테스트 작성  CI 연동
+```
+
+### 시나리오: 로그인 화면 E2E 테스트
+
+**1. View 파일 확인** - 테스트할 화면의 요소에 식별자가 있는지 확인합니다.
+
+```swift
+// Sources/Features/Login/LoginView.swift
+TextField("이메일", text: $email)
+    .accessibilityIdentifier("login_input_email")  // ✓ 식별자 있음
+
+SecureField("비밀번호", text: $password)
+    .accessibilityIdentifier("login_input_password")
+
+Button("로그인") { ... }
+    .accessibilityIdentifier("login_button_submit")
+```
+
+**2. POM 생성**
+
+```bash
+/e2e-pom LoginScreen --view-file Sources/Features/Login/LoginView.swift
+```
+
+생성된 Page Object:
+```swift
+// MyAppUITests/Sources/Pages/LoginScreenPage.swift
+final class LoginScreenPage: BasePage {
+    private var emailInput: XCUIElement { app.textFields["login_input_email"] }
+    private var passwordInput: XCUIElement { app.secureTextFields["login_input_password"] }
+    private var submitButton: XCUIElement { app.buttons["login_button_submit"] }
+
+    func enterEmail(_ email: String) -> Self { ... }
+    func enterPassword(_ password: String) -> Self { ... }
+    func tapSubmit() -> HomeScreenPage { ... }
+}
+```
+
+**3. 테스트 케이스 생성**
+
+```bash
+/e2e-test "유효한 자격 증명으로 로그인하면 홈 화면으로 이동한다"
+```
+
+생성된 테스트:
+```swift
+// MyAppUITests/Sources/Tests/LoginTests.swift
+func test_login_withValidCredentials_navigatesToHome() throws {
+    LoginScreenPage(app)
+        .enterEmail("test@example.com")
+        .enterPassword("password123")
+        .tapSubmit()
+        .verifyOnHomeScreen()
+}
+```
+
+**4. 테스트 실행**
+
+```bash
+# Xcode에서 실행
+Cmd + U
+
+# 또는 커맨드라인
+xcodebuild test -scheme MyAppUITests -destination 'platform=iOS Simulator,name=iPhone 15'
 ```
 
 ## 명령어 참조
@@ -105,6 +229,40 @@ cp -r mobile-e2e-agents/.claude/agents/* your-project/.claude/agents/
 | `/e2e-test "<시나리오>"` | 시나리오 설명으로 테스트 케이스 생성 |
 | `/e2e-ci` | CI/CD 워크플로우 파일 생성 |
 | `/e2e-guide` | 테스트 시나리오 설계를 위한 대화형 가이드 |
+
+## 트러블슈팅
+
+### 자주 발생하는 문제
+
+| 문제 | 원인 | 해결책 |
+|------|------|--------|
+| POM에 요소가 없음 | View에 `accessibilityIdentifier` 누락 | View 파일에 식별자 추가 후 재생성 |
+| 테스트가 요소를 못 찾음 | 요소 로딩 전 접근 시도 | `SmartWait` 또는 `waitForExistence` 사용 |
+| CI에서만 테스트 실패 | 시뮬레이터 상태 불일치 | 테스트 전 앱 리셋 (`launchArguments` 설정) |
+| Android에서 Compose 요소 못 찾음 | `testTag` 누락 | `Modifier.testTag("id")` 추가 |
+
+### 요소를 찾지 못할 때 디버깅
+
+```swift
+// 현재 화면의 모든 요소 출력
+print(app.debugDescription)
+
+// 특정 요소 존재 여부 확인
+let button = app.buttons["login_button_submit"]
+print("Exists: \(button.exists), Hittable: \(button.isHittable)")
+```
+
+### CI 환경에서 안정성 높이기
+
+```swift
+// BaseUITest.swift에서 앱 리셋 설정
+override func setUpWithError() throws {
+    app.launchArguments = ["--uitesting", "--reset-state"]
+    app.launch()
+}
+```
+
+> 더 많은 트러블슈팅: [docs/getting-started.md](docs/getting-started.md)
 
 ## 디렉토리 구조
 

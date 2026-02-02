@@ -92,6 +92,9 @@ mobile-e2e-agents/
 │   └── agents/             # Internal processing agents
 │       ├── ios-pom-generator.md
 │       ├── ios-test-writer.md
+│       ├── android-pom-generator.md
+│       ├── android-test-writer.md
+│       ├── android-ci-builder.md
 │       └── ci-workflow-builder.md
 │
 ├── templates/
@@ -100,7 +103,11 @@ mobile-e2e-agents/
 │   │   ├── support/        # Utility extensions
 │   │   └── ci/             # CI configuration templates
 │   │
-│   └── android/            # Android templates (Phase 2)
+│   └── android/
+│       ├── espresso/       # Espresso templates (View-based)
+│       ├── compose/        # Compose Testing templates
+│       ├── support/        # Android utilities
+│       └── ci/             # Android CI templates
 │
 ├── examples/               # Sample projects
 │   └── ios-sample-app/
@@ -108,10 +115,15 @@ mobile-e2e-agents/
 └── docs/                   # Documentation
     ├── getting-started.md
     ├── ios-guide.md
-    └── pom-patterns.md
+    ├── android-guide.md
+    ├── pom-patterns.md
+    ├── espresso-vs-uiautomator.md
+    └── compose-testing.md
 ```
 
 ## Generated Code Structure
+
+### iOS
 
 When you run `/e2e-init`, the following structure is created:
 
@@ -124,46 +136,92 @@ When you run `/e2e-init`, the following structure is created:
 │   │   ├── XCUIElement+Wait.swift
 │   │   ├── XCUIElement+Scroll.swift
 │   │   └── SmartWait.swift
-│   │
 │   ├── Pages/
 │   │   └── {ScreenName}Page.swift
-│   │
 │   ├── Flows/
 │   │   └── {Feature}Flow.swift
-│   │
 │   └── Tests/
 │       └── {Feature}Tests.swift
-│
 └── README.md
+```
+
+### Android
+
+When you run `/e2e-init android`, the following structure is created:
+
+```
+app/src/androidTest/java/{package}/
+├── support/
+│   ├── ViewWait.kt
+│   ├── ScrollUtils.kt
+│   ├── SystemHelper.kt
+│   ├── TestDataManager.kt
+│   └── ScreenshotHelper.kt
+├── pages/
+│   ├── BasePage.kt            # Espresso base
+│   ├── ComposeBasePage.kt     # Compose base (if detected)
+│   └── {ScreenName}Page.kt
+├── flows/
+│   └── {Feature}Flow.kt
+└── tests/
+    ├── BaseUITest.kt          # Espresso base test
+    ├── ComposeBaseUITest.kt   # Compose base test (if detected)
+    └── {Feature}Tests.kt
 ```
 
 ## Platform Support
 
-### iOS (Phase 1 - Available)
+### iOS
 - XCUITest framework
 - Swift 5.9+
 - Xcode 15.0+
 - iOS 17.0+
 
-### Android (Phase 2 - Coming Soon)
-- Espresso + UI Automator
+### Android
+- Espresso (View-based UI)
+- Jetpack Compose Testing
+- UI Automator (System interactions)
 - Kotlin
 - Android Studio
-- API 26+
+- API 24+
 
-## Accessibility Identifier Convention
+## Element Identifier Convention
 
-For reliable element identification, use this naming convention:
+For reliable element identification across platforms, use this naming convention:
 
-```swift
-"{screenName}_{elementType}_{elementName}"
-
-// Examples:
-"login_textField_username"
-"login_button_submit"
-"home_cell_alarmItem"
-"editor_picker_time"
 ```
+{screenName}_{elementType}_{elementName}
+```
+
+### iOS (accessibilityIdentifier)
+```swift
+TextField("Email", text: $email)
+    .accessibilityIdentifier("login_input_email")
+```
+
+### Android (testTag for Compose)
+```kotlin
+TextField(
+    modifier = Modifier.testTag("login_input_email"),
+    value = email,
+    onValueChange = { email = it }
+)
+```
+
+### Android (resource ID for Views)
+```xml
+<EditText
+    android:id="@+id/login_input_email"
+    ... />
+```
+
+### Common Element Types
+- `input` - Text fields
+- `button` - Buttons
+- `text` - Labels/Text
+- `toggle` - Switches, Checkboxes
+- `list` - Lists, Collections
+- `cell` - List items
 
 ## CI/CD Integration
 
